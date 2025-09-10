@@ -1,0 +1,120 @@
+{
+    "esquemas_catalogados": [
+        {
+            "name": "id",
+            "type": "INTEGER",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": true
+        },
+        {
+            "name": "nome",
+            "type": "VARCHAR(200)",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": false
+        }
+    ],
+    "tabelas_catalogadas": [
+        {
+            "name": "id",
+            "type": "INTEGER",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": true
+        },
+        {
+            "name": "nome_fisico",
+            "type": "VARCHAR(200)",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "tipo_objeto",
+            "type": "VARCHAR(50)",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "nome_negocio",
+            "type": "VARCHAR(200)",
+            "not_null": false,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "descricao",
+            "type": "TEXT",
+            "not_null": false,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "schema_id",
+            "type": "INTEGER",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": false
+        }
+    ],
+    "colunas_catalogadas": [
+        {
+            "name": "id",
+            "type": "INTEGER",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": true
+        },
+        {
+            "name": "nome_fisico",
+            "type": "VARCHAR(200)",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "tipo_dado",
+            "type": "VARCHAR(100)",
+            "not_null": false,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "nulo",
+            "type": "BOOLEAN",
+            "not_null": false,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "pk",
+            "type": "BOOLEAN",
+            "not_null": false,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "nome_negocio",
+            "type": "VARCHAR(200)",
+            "not_null": false,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "descricao",
+            "type": "TEXT",
+            "not_null": false,
+            "default_value": null,
+            "is_primary_key": false
+        },
+        {
+            "name": "tabela_id",
+            "type": "INTEGER",
+            "not_null": true,
+            "default_value": null,
+            "is_primary_key": false
+        }
+    ]
+}
