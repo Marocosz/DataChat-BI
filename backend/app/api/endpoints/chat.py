@@ -1,7 +1,9 @@
-# app/api/endpoints/chat.py
+# backend/app/api/endpoints/chat.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from app.api.models.chat_models import ChatRequest, ChatResponse
 from app.api.services.chatbot_service import ChatbotService, chatbot_service
+import uuid
 
 router = APIRouter()
 
@@ -16,6 +18,10 @@ async def handle_chat_query(
     if not request.query:
         raise HTTPException(status_code=400, detail="A query não pode estar vazia.")
     
-    response_text = service.get_response(request.query)
+    # Se nenhum session_id for enviado, cria um novo.
+    session_id = request.session_id or str(uuid.uuid4())
     
-    return ChatResponse(answer=response_text)
+    response_text = service.get_response(request.query, session_id)
+    
+    # Retorna a resposta e o session_id para o frontend
+    return ChatResponse(answer=response_text, session_id=session_id)
