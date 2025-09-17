@@ -1,3 +1,15 @@
+# backend/app/api/core/config.py
+
+"""
+Este módulo é responsável pelo gerenciamento centralizado das configurações da aplicação.
+Ele utiliza a biblioteca `pydantic-settings` para criar um objeto de configuração fortemente tipado.
+
+Seu principal objetivo é carregar, validar e expor variáveis de ambiente de forma segura e organizada.
+Isso evita que informações sensíveis (como chaves de API) ou configurações de ambiente (como caminhos de
+banco de dados) sejam 'hardcoded' (escritas diretamente) no código-fonte, o que é uma má prática de
+segurança e manutenção.
+"""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
