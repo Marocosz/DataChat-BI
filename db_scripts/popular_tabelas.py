@@ -5,8 +5,7 @@
 # 'operacoes_logisticas' antes de inserir novos dados. NÃO RODE EM PRODUÇÃO.
 #
 # O script usa a biblioteca Faker para gerar dados realistas e os insere em
-# massa para melhor performance. A quantidade de dados pode ser configurada
-# nas variáveis NUMERO_DE_CLIENTES e NUMERO_DE_OPERACOES.
+# massa para melhor performance. 
 # =============================================================================
 import os
 import random
@@ -22,7 +21,7 @@ load_dotenv()
 
 # --- CONFIGURAÇÕES ---
 NUMERO_DE_CLIENTES = 120
-NUMERO_DE_OPERACOES = 250000  # Pode aumentar para 10000, 50000, etc.
+NUMERO_DE_OPERACOES = 250000 
 
 # Inicializa o Faker para gerar dados em Português do Brasil
 fake = Faker('pt_BR')

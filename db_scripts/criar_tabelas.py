@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- SCRIPT SQL COMPLETO PARA CRIAÇÃO DO BANCO DE DADOS ---
-# Este script executa todas as etapas na ordem correta.
 SQL_SETUP_SCRIPT = """
 -- Etapa 1: Criação dos tipos ENUM (se não existirem)
 DO $$
@@ -85,7 +84,6 @@ def setup_database():
     Função principal para conectar ao PostgreSQL e executar o script de setup.
     """
     try:
-        # Pega as credenciais do ambiente (carregadas do .env)
         db_params = {
             "host": os.getenv("DB_HOST"),
             "port": os.getenv("DB_PORT"),
@@ -98,7 +96,6 @@ def setup_database():
         # Validação para garantir que todas as variáveis foram carregadas
         if not all(db_params.values()):
             print("❌ ERRO: Uma ou mais variáveis de ambiente do banco de dados não foram definidas.")
-            print("   Verifique se o arquivo .env está na mesma pasta e preenchido corretamente.")
             return
 
         # Conectando ao banco de dados PostgreSQL
@@ -118,12 +115,10 @@ def setup_database():
     except psycopg2.OperationalError as e:
         print(f"\n❌ ERRO DE CONEXÃO: Não foi possível conectar ao banco de dados.")
         print(f"   Detalhes: {e}")
-        print("\n   👉 Por favor, verifique os valores no seu arquivo .env (host, porta, usuário, senha, etc.).")
         
     except psycopg2.Error as e:
         print(f"\n❌ Ocorreu um erro inesperado do PostgreSQL:")
         print(f"   Detalhes: {e}")
 
-# Ponto de entrada do script: só executa a função se o arquivo for chamado diretamente
 if __name__ == '__main__':
     setup_database()
