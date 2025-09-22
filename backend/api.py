@@ -3,7 +3,18 @@ import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from app.chains.sql_rag_chain import get_sql_rag_chain
+from app.chains.sql_rag_chain import create_master_chain
+
+# --- Bloco Adicionado: Configuração do Logging ---
+# Define o formato e o nível mínimo de logs que serão exibidos
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)-25s - %(levelname)-8s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+# --------------------------------------------------
+
+# --- O resto do seu código permanece o mesmo ---
 
 # Configuração do App FastAPI
 app = FastAPI(
@@ -23,7 +34,7 @@ app.add_middleware(
 )
 
 # Carrega a cadeia RAG na inicialização
-rag_chain = get_sql_rag_chain()
+rag_chain = create_master_chain()
 
 # Modelos de dados para a requisição e resposta
 class ChatRequest(BaseModel):
@@ -32,25 +43,18 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     """
-    Recebe uma pergunta, processa na cadeia RAG e retorna a resposta do LLM.
+    Recebe uma pergunta e retorna diretamente o dicionário da cadeia RAG.
+    O parser de JSON e a lógica de formatação agora estão dentro da cadeia.
     """
     try:
-        llm_output_str = rag_chain.invoke({"question": request.question})
-        
-        # A saída do LLM é uma string. Precisamos tentar convertê-la para JSON.
-        try:
-            # Tenta analisar a string como JSON
-            response_json = json.loads(llm_output_str)
-            return response_json
-        except json.JSONDecodeError:
-            # Se falhar, o LLM não gerou um JSON válido.
-            # Empacotamos como uma resposta de texto para manter a consistência.
-            logging.warning("LLM output was not valid JSON. Returning as text.")
-            return {"type": "text", "content": llm_output_str}
-
+        # A cadeia agora sempre retorna um dicionário, seja de um gráfico ou de texto.
+        response_dict = rag_chain.invoke({"question": request.question})
+        return response_dict
     except Exception as e:
+        # Esta linha agora irá funcionar e imprimir o erro detalhado no terminal
         logging.error(f"Erro no processamento da cadeia RAG: {e}", exc_info=True)
-        return {"type": "text", "content": "Desculpe, ocorreu um erro ao processar sua solicitação."}
+        return {"type": "text", "content": "Desculpe, ocorreu um erro grave ao processar sua solicitação."}
+
 
 @app.get("/")
 def read_root():

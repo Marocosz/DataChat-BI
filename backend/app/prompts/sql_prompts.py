@@ -123,7 +123,24 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     **Pergunta Original:** {question}
     **Resultado do Banco de Dados:**
     {result}
+    
+    {format_instructions}
 
     **Sua Resposta (APENAS O JSON):**
+    """
+)
+
+ROUTER_PROMPT = PromptTemplate.from_template(
+    """
+    Sua tarefa é classificar o texto do usuário em uma das duas categorias a seguir, com base em sua intenção. Responda APENAS com o nome da categoria, e nada mais.
+
+    CATEGORIAS:
+    - `consulta_ao_banco_de_dados`: Se a pergunta parece ser uma solicitação de dados, insights, relatórios, listas ou informações específicas sobre operações, clientes, fretes, etc.
+    - `saudacao_ou_conversa_simples`: Se a pergunta é uma saudação, despedida, agradecimento ou qualquer outra forma de conversa que não busca dados específicos.
+
+    Texto do usuário:
+    {question}
+
+    Categoria:
     """
 )
