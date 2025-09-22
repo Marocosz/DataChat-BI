@@ -4,6 +4,7 @@ import re
 from typing import Dict, Any
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableBranch, RunnableLambda
+from langchain_core.prompts import PromptTemplate
 
 # Importando nossos componentes modulares
 from app.core.llm import get_llm, get_answer_llm

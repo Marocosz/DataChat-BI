@@ -10,7 +10,7 @@ __pycache__/
 # Ambientes Virtuais
 # ----------------------------------------------------------------
 # Ignora a pasta do nosso ambiente virtual na raiz do projeto
-/venvcatbot/
+/venvsuppbot/
 
 # ----------------------------------------------------------------
 # Arquivos de Configuração e Chaves Sensíveis
@@ -21,7 +21,7 @@ __pycache__/
 *.env
 
 # ----------------------------------------------------------------
-# Dependências e Pacotes
+# Dependências e Pacotes Python
 # ----------------------------------------------------------------
 # Embora a gente versiona o requirements.txt, ignora outras pastas de pacotes
 dist/
@@ -29,6 +29,21 @@ build/
 eggs/
 *.egg-info/
 wheels/
+
+# ----------------------------------------------------------------
+# Frontend (React)
+# ----------------------------------------------------------------
+# Ignora a pasta de dependências do Node.js
+/frontend/node_modules/
+
+# Ignora a pasta de build do React
+/frontend/build/
+
+# Logs de debug do npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # ----------------------------------------------------------------
 # Configurações de IDEs e Editores
