@@ -130,7 +130,7 @@ def popular_banco():
                     operacoes_para_inserir.append(operacao)
                 
                 # --- 4. Inserir Operações Logísticas (em massa com COPY) ---
-                print("Inserindo operações no banco de dados com COPY (método mais rápido)...")
+                print("Inserindo operações no banco de dados com COPY...")
                 buffer = io.StringIO()
                 for operacao in operacoes_para_inserir:
                     linha = '\t'.join(str(v).replace('\t', ' ') if v is not None else '\\N' for v in operacao)
@@ -151,7 +151,6 @@ def popular_banco():
 
     except psycopg2.OperationalError as e:
         print(f"\n❌ ERRO DE CONEXÃO: Não foi possível conectar ao banco de dados.")
-        print(f"   👉 Verifique seu arquivo .env e a conexão com a internet/VPN.")
     except Exception as e:
         print(f"\n❌ Ocorreu um erro inesperado: {e}")
 

@@ -1,3 +1,16 @@
+# =============================================================================
+# SCRIPT PARA CRIAÇÃO E SETUP DA ESTRUTURA DO BANCO DE DADOS
+#
+# Este script é responsável por construir todo o alicerce do banco de dados
+# PostgreSQL. Ele cria as tabelas 'clientes' e 'operacoes_logisticas', 
+# os tipos de dados customizados (ENUMs) e os índices de performance.
+#
+# NOTA: O script é IDEMPOTENTE e NÃO DESTRUTIVO. Graças ao uso de 
+# 'IF NOT EXISTS', ele pode ser executado múltiplas vezes sem apagar
+# dados ou causar erros. Ele apenas criará as estruturas que estiverem 
+# faltando.
+# =============================================================================
+
 import os
 import psycopg2
 import psycopg2.errors

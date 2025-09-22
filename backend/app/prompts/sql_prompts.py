@@ -1,10 +1,22 @@
-# app/prompts/sql_prompts.py (Versão Final Corrigida)
+# =============================================================================
+# ARQUIVO DE PROMPTS - O CÉREBRO CONVERSACIONAL DA APLICAÇÃO "prompt engineering".
+#
+# Este arquivo centraliza todas as instruções (prompts) que guiam o 
+# comportamento dos modelos de linguagem (LLMs). Cada variável aqui define uma
+# tarefa específica, como gerar SQL, classificar a intenção do usuário ou
+# formatar a resposta final.
+# =============================================================================
 
-# <-- Importação corrigida (sem duplicatas)
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 
-# 1. Definição dos Exemplos (Few-Shot Examples)
-# A qualidade destes exemplos define a performance do seu sistema.
+# --- Bloco 1: Geração de SQL ---
+# Este bloco contém todos os componentes para a tarefa de transformar a pergunta
+# do usuário (em português) em uma query SQL válida para o PostgreSQL.
+
+# "Few-Shot"
+# Esta lista é a parte mais CRÍTICA para a precisão do nosso sistema.
+# Ela funciona como um "gabarito" ou "cola" que ensina o LLM, através de exemplos,
+# como ele deve traduzir perguntas para o nosso esquema de banco de dados específico.
 FEW_SHOT_EXAMPLES = [
     {
         "input": "Quantas operações de transporte estão 'EM_TRANSITO'?",
@@ -24,12 +36,16 @@ FEW_SHOT_EXAMPLES = [
     }
 ]
 
-# 2. Template para formatar cada exemplo
+# Template para Formatar os Exemplos
+# Este é um pequeno template auxiliar que define como cada exemplo da lista acima
+# será formatado antes de ser inserido no prompt final.
 EXAMPLE_PROMPT_TEMPLATE = PromptTemplate.from_template(
     "User question: {input}\nSQL query: {query}"
 )
 
-# 3. Template Principal (System Prompt) que guia o LLM
+# O Manual de Instruções para o Gerador de SQL
+# Este é o prompt de sistema (as instruções principais) para o LLM.
+# Ele define o "personagem" (especialista em PostgreSQL) e as regras que ele deve seguir.
 SQL_GENERATION_SYSTEM_PROMPT = """
 Você é um assistente especialista em PostgreSQL. Sua única função é analisar a pergunta de um usuário e o esquema de um banco de dados para gerar uma query SQL sintaticamente correta.
 
@@ -45,7 +61,10 @@ Aqui está o esquema do banco de dados:
 Considere os seguintes exemplos de perguntas e queries bem-sucedidas:
 """
 
-# 4. Construção do FewShotPromptTemplate
+# O Construtor do Prompt Final de SQL
+# O FewShotPromptTemplate é o componente que junta tudo de forma inteligente.
+# Ele pega as instruções (prefix), os exemplos formatados (examples), o esquema do banco (schema)
+# e a pergunta do usuário (question) para montar dinamicamente um prompt completo e rico em contexto.
 SQL_PROMPT = FewShotPromptTemplate(
     examples=FEW_SHOT_EXAMPLES,
     example_prompt=EXAMPLE_PROMPT_TEMPLATE,
@@ -55,8 +74,9 @@ SQL_PROMPT = FewShotPromptTemplate(
     example_separator="\n\n"
 )
 
-# 5. Prompt para a Geração da Resposta Final
-# (Versão única e corrigida, a duplicata foi removida)
+# --- Bloco 2: Geração da Resposta Final (Analista de Dados) ---
+# Este prompt transforma o resultado bruto do banco de dados em uma resposta
+# estruturada e amigável, decidindo se deve apresentar texto ou um gráfico.
 FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é atuar como um analista de dados especialista e assistente de comunicação.
@@ -69,6 +89,7 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
 
     ---
     **ESPECIFICAÇÃO DO JSON PARA GRÁFICOS:**
+    # Define a "gramática" do JSON que o frontend espera para renderizar um gráfico.
     ```json
     {{
       "type": "chart",
@@ -81,6 +102,7 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     ```
 
     **ESPECIFICAÇÃO DO JSON PARA TEXTO:**
+    # Define a "gramática" do JSON para respostas de texto simples.
     ```json
     {{
       "type": "text",
@@ -90,7 +112,8 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     ---
 
     **EXEMPLOS DE DECISÃO:**
-
+    # Exemplos que ensinam o LLM a escolher entre texto e gráfico.
+    # As chaves duplas [{{...}}] "escapam" as chaves para que o LangChain não as confunda com variáveis de template.
     * **Pergunta:** "Qual o valor total de frete por estado?"
         **Resultado do BD:** `[{{'uf_destino': 'SP', 'valor_total_frete': 15000.00}}, {{'uf_destino': 'MG', 'valor_total_frete': 8000.00}}]`
         **SUA RESPOSTA JSON (CORRETA):**
@@ -124,12 +147,17 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     **Resultado do Banco de Dados:**
     {result}
     
+    # Este placeholder será preenchido pelo JsonOutputParser com instruções extras de formatação.
     {format_instructions}
 
     **Sua Resposta (APENAS O JSON):**
     """
 )
 
+# --- Bloco 3: Roteador de Intenção ---
+# Este prompt é para uma tarefa rápida e barata de classificação. Ele atua como o
+# "porteiro" ou "sistema de triagem" da aplicação, decidindo se a pergunta do usuário
+# precisa ir para a complexa cadeia de banco de dados ou para uma simples resposta de saudação.
 ROUTER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é classificar o texto do usuário em uma das duas categorias a seguir, com base em sua intenção. Responda APENAS com o nome da categoria, e nada mais.
