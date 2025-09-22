@@ -1,4 +1,4 @@
-# app/core/database.py
+# app/core/database.py (Versão Final Corrigida)
 import logging
 from langchain_community.utilities import SQLDatabase
 from .config import settings
@@ -14,7 +14,9 @@ def get_db_connection() -> SQLDatabase:
         db = SQLDatabase.from_uri(
             settings.DATABASE_URI,
             include_tables=['operacoes_logisticas', 'clientes'],
-            sample_rows_in_table_info=2
+            # ALTERAÇÃO PRINCIPAL AQUI:
+            # Não vamos mais incluir linhas de exemplo para manter o prompt compacto.
+            sample_rows_in_table_info=0 
         )
         logger.info("Conexão com o banco de dados estabelecida com sucesso.")
         return db

@@ -5,11 +5,10 @@ from .config import settings
 def get_llm() -> ChatGroq:
     """
     Retorna uma instância configurada do LLM da Groq para geração de SQL.
-    - model_name: Modelo potente para raciocínio e geração de SQL.
-    - temperature=0.0: Essencial para obter queries SQL determinísticas e precisas.
+    O nome do modelo é lido a partir das configurações.
     """
     return ChatGroq(
-        model_name="llama3-70b-8192",
+        model_name=settings.GROQ_SQL_MODEL, # <-- Lendo da configuração
         api_key=settings.GROQ_API_KEY,
         temperature=0.0
     )
@@ -17,11 +16,10 @@ def get_llm() -> ChatGroq:
 def get_answer_llm() -> ChatGroq:
     """
     Retorna uma instância configurada do LLM da Groq para geração de respostas.
-    - model_name: Pode ser um modelo mais rápido para respostas em linguagem natural.
-    - temperature=0.3: Um pouco de criatividade para uma resposta mais fluida.
+    O nome do modelo é lido a partir das configurações.
     """
     return ChatGroq(
-        model_name="llama3-8b-8192",
+        model_name=settings.GROQ_ANSWER_MODEL, # <-- Lendo da configuração
         api_key=settings.GROQ_API_KEY,
         temperature=0.3
     )

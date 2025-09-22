@@ -11,17 +11,21 @@ class Settings(BaseSettings):
     # Credenciais do Groq
     GROQ_API_KEY: str
 
+    # Nomes dos modelos Groq (carregados do .env)
+    GROQ_SQL_MODEL: str
+    GROQ_ANSWER_MODEL: str
+
     # Credenciais do Banco de Dados
     DB_HOST: str
-    DB_DATABASE: str
-    DB_USERNAME: str
-    DB_PASSWORD: str
+    DB_NAME: str
+    DB_USER: str
+    DB_PASS: str
     DB_PORT: int = 5432
 
     @property
     def DATABASE_URI(self) -> str:
         """Gera a URI de conexão para o SQLAlchemy/LangChain."""
-        return f"postgresql+psycopg2://{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_DATABASE}"
+        return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 # Instância única que será importada por outros módulos
 settings = Settings()

@@ -1,6 +1,7 @@
-# app/prompts/sql_prompts.py
+# app/prompts/sql_prompts.py (Versão Final Corrigida)
+
+# <-- Importação corrigida (sem duplicatas)
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
-from langchain_core.prompts import PromptTemplate
 
 # 1. Definição dos Exemplos (Few-Shot Examples)
 # A qualidade destes exemplos define a performance do seu sistema.
@@ -42,7 +43,6 @@ Aqui está o esquema do banco de dados:
 {schema}
 
 Considere os seguintes exemplos de perguntas e queries bem-sucedidas:
-{examples}
 """
 
 # 4. Construção do FewShotPromptTemplate
@@ -55,26 +55,8 @@ SQL_PROMPT = FewShotPromptTemplate(
     example_separator="\n\n"
 )
 
-
 # 5. Prompt para a Geração da Resposta Final
-FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
-    """
-    Dada a pergunta original do usuário e o resultado obtido de uma consulta ao banco de dados, sua tarefa é formular uma resposta clara, amigável e concisa em português.
-
-    **Instruções:**
-    - Se o resultado for uma lista de dados (uma tabela), formate-a de maneira legível usando Markdown.
-    - Se o resultado for um único valor (ex: uma contagem ou uma média), apresente-o em uma frase completa e informativa.
-    - Se o resultado indicar um erro, informe ao usuário que não foi possível encontrar a informação e que ele pode tentar reformular a pergunta.
-    - Aja como um assistente prestativo. Não mencione que você executou uma query SQL ou mostre o resultado bruto. Apenas apresente o insight final.
-
-    **Pergunta Original:** {question}
-    **Resultado do Banco de Dados:**
-    {result}
-
-    **Sua Resposta:**
-    """
-)
-
+# (Versão única e corrigida, a duplicata foi removida)
 FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é atuar como um analista de dados especialista e assistente de comunicação.
@@ -97,8 +79,6 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
       "y_axis": ["nome_da_chave_para_o_eixo_y"]
     }}
     ```
-    - `x_axis`: A chave do dicionário de dados que representa a categoria (eixo X).
-    - `y_axis`: Uma lista com a(s) chave(s) do dicionário de dados que representa(m) o(s) valor(es) numérico(s) (eixo Y).
 
     **ESPECIFICAÇÃO DO JSON PARA TEXTO:**
     ```json
@@ -112,7 +92,7 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     **EXEMPLOS DE DECISÃO:**
 
     * **Pergunta:** "Qual o valor total de frete por estado?"
-        **Resultado do BD:** `[{'uf_destino': 'SP', 'valor_total_frete': 15000.00}, {'uf_destino': 'MG', 'valor_total_frete': 8000.00}]`
+        **Resultado do BD:** `[{{'uf_destino': 'SP', 'valor_total_frete': 15000.00}}, {{'uf_destino': 'MG', 'valor_total_frete': 8000.00}}]`
         **SUA RESPOSTA JSON (CORRETA):**
         ```json
         {{
@@ -128,7 +108,7 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
         }}
         ```
     * **Pergunta:** "Qual o status da operação 'OP-12345'?"
-        **Resultado do BD:** `[{'status': 'EM_TRANSITO'}]`
+        **Resultado do BD:** `[{{'status': 'EM_TRANSITO'}}]`
         **SUA RESPOSTA JSON (CORRETA):**
         ```json
         {{
