@@ -16,11 +16,9 @@
 # --- Bloco de Importações ---
 import logging
 import json
-# Importa a classe principal do framework FastAPI para criar nossa aplicação.
 from fastapi import FastAPI
 # Importa o middleware de CORS para permitir a comunicação entre nosso backend e frontend.
 from fastapi.middleware.cors import CORSMiddleware
-# Importa BaseModel do Pydantic para criar modelos de dados e validar requisições.
 from pydantic import BaseModel
 # Importa a função "maestro" que constrói nossa cadeia de IA completa.
 from app.chains.sql_rag_chain import create_master_chain
@@ -36,8 +34,6 @@ logging.basicConfig(
 )
 
 # --- Instanciação da Aplicação FastAPI ---
-# Cria a instância principal da aplicação. FastAPI usará este objeto 'app'
-# para configurar todas as rotas e o servidor.
 app = FastAPI(
     title="SuppBot RAG API",
     description="API para interagir com o chatbot de logística",
@@ -70,10 +66,9 @@ class ChatRequest(BaseModel):
     # A requisição deve ter uma chave "question" cujo valor é uma string.
     question: str
 
+
 # --- Definição dos Endpoints da API ---
 
-# O decorador '@app.post("/chat")' registra a função abaixo para lidar com
-# requisições do tipo POST para a URL "/chat".
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     """
@@ -85,16 +80,13 @@ async def chat_endpoint(request: ChatRequest):
         response_dict = rag_chain.invoke({"question": request.question})
         # FastAPI converte automaticamente o dicionário Python em uma resposta JSON para o frontend.
         return response_dict
+    
     except Exception as e:
-        # Se qualquer erro inesperado acontecer na cadeia, o logging o registrará
-        # detalhadamente no terminal do servidor para depuração.
+
         logging.error(f"Erro no processamento da cadeia RAG: {e}", exc_info=True)
-        # E retornamos uma mensagem de erro amigável para o frontend.
         return {"type": "text", "content": "Desculpe, ocorreu um erro grave ao processar sua solicitação."}
 
 
-# O decorador '@app.get("/")' registra a função para lidar com requisições GET
-# para a URL raiz do servidor.
 @app.get("/")
 def read_root():
     """Endpoint 'health check' para verificar se a API está no ar."""

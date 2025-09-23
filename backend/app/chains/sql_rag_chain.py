@@ -105,10 +105,10 @@ def create_master_chain() -> Runnable:
     Cria a cadeia principal que primeiro roteia a intenção do usuário e depois
     executa a cadeia apropriada (SQL RAG ou Chat Simples).
     """
-    # 1. Cadeia do Roteador: Uma chamada rápida para classificar a pergunta.
+    # Cadeia do Roteador: Uma chamada rápida para classificar a pergunta.
     router_chain = ROUTER_PROMPT | get_answer_llm() | StrOutputParser()
 
-    # 2. Cadeia de Chat Simples: Para responder a saudações e conversas simples.
+    # Cadeia de Chat Simples: Para responder a saudações e conversas simples.
     simple_chat_prompt = PromptTemplate.from_template(
         "Você é um assistente amigável chamado SuppBot. Responda a saudação do usuário de forma concisa e educada em português.\n\nUsuário: {question}\nSua Resposta:"
     )
@@ -123,13 +123,13 @@ def create_master_chain() -> Runnable:
         | RunnableLambda(lambda text: {"type": "text", "content": text})
     )
 
-    # 3. Cadeia RAG SQL: Reutiliza a função complexa que definimos acima.
+    # Cadeia RAG SQL: Reutiliza a função complexa que definimos acima.
     sql_chain = get_sql_rag_chain()
 
-    # 4. Cadeia de Fallback: Uma "saída de emergência" se o roteador não conseguir classificar a pergunta.
+    # Cadeia de Fallback: Uma "saída de emergência" se o roteador não conseguir classificar a pergunta.
     fallback_chain = RunnableLambda(lambda x: {"type": "text", "content": "Desculpe, não entendi sua pergunta. Posso ajudar com dados sobre logística ou responder a saudações."})
 
-    # 5. O Roteador Condicional (RunnableBranch)
+    # O Roteador Condicional (RunnableBranch)
     # Funciona como um if/elif/else. Ele verifica cada condição em ordem e executa a primeira que for verdadeira.
     branch = RunnableBranch(
         # Condição 1: Se o 'topic' contiver "consulta_ao_banco_de_dados", executa a 'sql_chain'.
@@ -140,7 +140,7 @@ def create_master_chain() -> Runnable:
         fallback_chain,
     )
 
-    # 6. A Cadeia Mestre que Une Tudo
+    # A Cadeia Mestre que Une Tudo
     master_chain = (
         # Pega a entrada original ({"question": ...}), executa a 'router_chain' para obter o 'topic',
         # e passa um novo dicionário ({"question": ..., "topic": ...}) para a próxima etapa.
