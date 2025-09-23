@@ -73,6 +73,44 @@ SQL_PROMPT = FewShotPromptTemplate(
     input_variables=["question", "schema"],
     example_separator="\n\n"
 )
+"""
+(====================== INÍCIO DO PREFIXO ======================)
+Você é um assistente especialista em PostgreSQL. Sua única função é analisar a pergunta de um usuário e o esquema de um banco de dados para gerar uma query SQL sintaticamente correta.
+
+**Regras Importantes:**
+- Apenas gere a query SQL.
+- Não inclua ```sql, ``` ou qualquer outra explicação ou texto antes ou depois da query.
+- Use as tabelas e colunas do esquema fornecido.
+- Se a pergunta envolver datas, use a data atual como `NOW()` quando apropriado.
+
+Aqui está o esquema do banco de dados:
+Tabela: clientes
+Colunas: id (integer), nome_razao_social (character varying), ...
+
+Tabela: operacoes_logisticas
+Colunas: id (bigint), codigo_operacao (character varying), ...
+
+Considere os seguintes exemplos de perguntas e queries bem-sucedidas:
+(======================= FIM DO PREFIXO ========================)
+
+(====================== INÍCIO DO RECHEIO ======================)
+User question: Quantas operações de transporte estão 'EM_TRANSITO'?
+SQL query: SELECT count(*) FROM operacoes_logisticas WHERE tipo = 'TRANSPORTE' AND status = 'EM_TRANSITO';
+
+User question: Liste os nomes dos clientes que tiveram operações com valor de mercadoria acima de 10.000.
+SQL query: SELECT c.nome_razao_social FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id WHERE o.valor_mercadoria > 10000;
+
+ (outros exemplos) ...
+(======================== FIM DO RECHEIO =======================)
+
+(======================= INÍCIO DO SUFIXO =======================)
+User question: Quantos clientes temos?
+SQL query:
+(======================== FIM DO SUFIXO ========================)
+"""
+
+
+
 
 # --- Bloco 2: Geração da Resposta Final (Analista de Dados) ---
 # Este prompt transforma o resultado bruto do banco de dados em uma resposta

@@ -50,11 +50,13 @@ def get_sql_rag_chain() -> Runnable:
                 query = query.strip()[:-1] + " LIMIT 100;"
             else:
                 query = query.strip() + " LIMIT 100;"
+                
             logger.warning(f"Query modificada para incluir LIMIT: {query}")
         
         try:
             # Usa a instância de conexão do LangChain para rodar a query.
             return db_instance.run(query)
+        
         except Exception as e:
             logger.error(f"Erro ao executar a query: {e}")
             return f"Erro: A query falhou. Causa: {e}. Tente reformular a pergunta."
@@ -62,7 +64,7 @@ def get_sql_rag_chain() -> Runnable:
     # Instancia o parser que forçará a saída do LLM final para o formato JSON.
     parser = JsonOutputParser()
 
-    # Etapa 1: Cadeia para Geração de SQL
+    # Cadeia para Geração de SQL
     sql_generation_chain = (
         # Começa com a entrada original e injeta o schema do banco de dados no fluxo.
         RunnablePassthrough.assign(schema=lambda _: get_compact_db_schema())
@@ -74,7 +76,7 @@ def get_sql_rag_chain() -> Runnable:
         | StrOutputParser()
     )
     
-    # Etapa 2: Cadeia Completa que Executa e Formata
+    # Cadeia Completa que Executa e Formata
     full_rag_chain = (
         # Começa com a entrada original e adiciona a 'generated_sql' vinda da cadeia acima.
         RunnablePassthrough.assign(generated_sql=sql_generation_chain)
