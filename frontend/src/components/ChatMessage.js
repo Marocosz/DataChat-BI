@@ -11,6 +11,15 @@ const ChatMessage = ({ sender, content }) => {
   // Escolhe o ícone do avatar com base em quem enviou a mensagem.
   const Avatar = isBot ? FiCpu : FiUser;
 
+  // --- Alteração Principal ---
+  // Define as classes CSS dinamicamente para o balão da mensagem.
+  let messageClasses = `message ${isBot ? 'bot-message' : 'user-message'}`;
+  // Se o conteúdo for um gráfico, adicionamos uma classe extra para estilizá-lo de forma diferente (maior).
+  if (content.type === 'chart') {
+    messageClasses += ' has-chart';
+  }
+  // -------------------------
+
   // Função interna para decidir qual tipo de conteúdo renderizar (texto ou gráfico).
   const renderContent = () => {
     if (content.type === 'chart') {
@@ -27,7 +36,8 @@ const ChatMessage = ({ sender, content }) => {
       <div className="avatar">
         <Avatar />
       </div>
-      <div className={`message ${isBot ? 'bot-message' : 'user-message'}`}>
+      {/* Usa a variável de classes que criamos para aplicar os estilos corretos */}
+      <div className={messageClasses}>
         {renderContent()}
         
         {/* Renderiza o tempo de resposta apenas se for uma mensagem do bot e se a informação existir */}

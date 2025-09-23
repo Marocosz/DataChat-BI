@@ -96,6 +96,12 @@
 .loading-dots div:nth-child(1) { animation-delay: -0.32s; }
 .loading-dots div:nth-child(2) { animation-delay: -0.16s; }
 
+.message.has-chart {
+  max-width: 800px; /* Largura máxima maior */
+  width: 100%;      /* Tenta usar 100% da largura disponível até o máximo */
+  padding: 20px;
+}
+
 @keyframes bounce {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1.0); }

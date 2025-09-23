@@ -1,7 +1,7 @@
 # =============================================================================
 # ARQUIVO DE PROMPTS - O CÉREBRO CONVERSACIONAL DA APLICAÇÃO "prompt engineering".
 #
-# Este arquivo centraliza todas as instruções (prompts) que guiam o 
+# Este arquivo centraliza todas as instruções (prompts) que guiam o
 # comportamento dos modelos de linguagem (LLMs). Cada variável aqui define uma
 # tarefa específica, como gerar SQL, classificar a intenção do usuário ou
 # formatar a resposta final.
@@ -110,8 +110,6 @@ SQL query:
 """
 
 
-
-
 # --- Bloco 2: Geração da Resposta Final (Analista de Dados) ---
 # Este prompt transforma o resultado bruto do banco de dados em uma resposta
 # estruturada e amigável, decidindo se deve apresentar texto ou um gráfico.
@@ -124,10 +122,10 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     1.  **SE** o resultado dos dados for apropriado para uma visualização (ex: dados agrupados, séries temporais, comparações), sua resposta **DEVE** ser um JSON bem-formado que descreve o gráfico.
     2.  **SE** o resultado for um único valor, uma lista simples, ou texto, sua resposta **DEVE** ser um JSON com um campo de texto.
     3.  Nunca responda com texto puro. A saída deve ser sempre um JSON válido.
+    4.  **SE** o usuário especificar um tipo de gráfico (ex: 'gráfico de linha', 'pizza', 'barras'), sua resposta **DEVE** usar esse `chart_type`. Se não, escolha o mais apropriado.
 
     ---
     **ESPECIFICAÇÃO DO JSON PARA GRÁFICOS:**
-    # Define a "gramática" do JSON que o frontend espera para renderizar um gráfico.
     ```json
     {{
       "type": "chart",
@@ -135,12 +133,12 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
       "title": "Um título descritivo para o gráfico",
       "data": [{{ "campo1": "valor1", "campo2": 10 }}, {{ "campo1": "valor2", "campo2": 20 }}],
       "x_axis": "nome_da_chave_para_o_eixo_x",
-      "y_axis": ["nome_da_chave_para_o_eixo_y"]
+      "y_axis": ["nome_da_chave_para_o_eixo_y"],
+      "y_axis_label": "Um nome descritivo para o valor do eixo Y (ex: 'Valor do Frete (R$)')"
     }}
     ```
 
     **ESPECIFICAÇÃO DO JSON PARA TEXTO:**
-    # Define a "gramática" do JSON para respostas de texto simples.
     ```json
     {{
       "type": "text",
@@ -150,8 +148,6 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     ---
 
     **EXEMPLOS DE DECISÃO:**
-    # Exemplos que ensinam o LLM a escolher entre texto e gráfico.
-    # As chaves duplas [{{...}}] "escapam" as chaves para que o LangChain não as confunda com variáveis de template.
     * **Pergunta:** "Qual o valor total de frete por estado?"
         **Resultado do BD:** `[{{'uf_destino': 'SP', 'valor_total_frete': 15000.00}}, {{'uf_destino': 'MG', 'valor_total_frete': 8000.00}}]`
         **SUA RESPOSTA JSON (CORRETA):**
@@ -165,7 +161,8 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
                 {{ "uf_destino": "MG", "valor_total_frete": 8000.00 }}
             ],
             "x_axis": "uf_destino",
-            "y_axis": ["valor_total_frete"]
+            "y_axis": ["valor_total_frete"],
+            "y_axis_label": "Valor Total do Frete"
         }}
         ```
     * **Pergunta:** "Qual o status da operação 'OP-12345'?"
@@ -185,7 +182,6 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     **Resultado do Banco de Dados:**
     {result}
     
-    # Este placeholder será preenchido pelo JsonOutputParser com instruções extras de formatação.
     {format_instructions}
 
     **Sua Resposta (APENAS O JSON):**
