@@ -100,6 +100,7 @@
   max-width: 800px; /* Largura máxima maior */
   width: 100%;      /* Tenta usar 100% da largura disponível até o máximo */
   padding: 20px;
+  background-color: var(--surface); /* Garante a cor de fundo correta */
 }
 
 @keyframes bounce {
