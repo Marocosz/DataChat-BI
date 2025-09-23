@@ -1,0 +1,153 @@
+/* src/pages/Dashboard.css - Versão Mais Compacta */
+
+.dashboard {
+  /* Padding lateral ainda menor */
+  padding: 1.5rem 2rem; 
+  color: var(--text-primary);
+}
+
+.dashboard-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  /* Fonte do título principal reduzida */
+  font-size: 2rem; 
+  font-weight: 800;
+}
+
+.dashboard-header p {
+  /* Fonte do subtítulo reduzida */
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.kpi-grid {
+  display: grid;
+  /* Tamanho mínimo dos cards ainda menor */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+  gap: 1rem; /* Espaçamento entre os cards reduzido */
+  margin-bottom: 2.5rem;
+}
+
+.kpi-card {
+  background-color: var(--surface);
+  /* Padding interno do card reduzido */
+  padding: 1rem 1.25rem; 
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  /* Espaçamento entre o ícone e o texto reduzido */
+  gap: 1rem; 
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  overflow: hidden;
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.kpi-icon {
+  /* Ícone e seu container menores */
+  font-size: 1.8rem;
+  padding: 0.7rem; 
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.kpi-text {
+  flex: 1; 
+  min-width: 0;
+}
+
+.kpi-text h3 {
+  margin: 0 0 0.25rem 0;
+  /* Fonte do título do card reduzida */
+  font-size: 0.85rem; 
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.kpi-text p {
+  margin: 0;
+  font-weight: 700;
+  /* Clamp ajustado para ser ainda menor */
+  font-size: clamp(1.0rem, 1.6vw, 1.6rem); 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-text p span {
+  font-size: 0.85rem; /* Unidade reduzida */
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 6px;
+}
+
+.chart-section {
+  background-color: var(--surface);
+  /* Padding da seção do gráfico reduzido */
+  padding: 1.25rem 1.5rem; 
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.chart-section h2 {
+  text-align: left;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  font-size: 1.25rem; /* Título do gráfico reduzido */
+}
+
+/* O restante do CSS (tooltip, dashboard-state) permanece o mesmo */
+.custom-tooltip {
+  background-color: #1a1d24;
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.custom-tooltip .label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--primary);
+}
+
+.dashboard-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.dashboard-state.error {
+  color: #f5365c;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Cria duas colunas de tamanho igual */
+  gap: 1.5rem; /* Espaço entre os gráficos */
+  margin-top: 2.5rem;
+}
+
+/* Em telas menores, os gráficos ficarão um embaixo do outro */
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}

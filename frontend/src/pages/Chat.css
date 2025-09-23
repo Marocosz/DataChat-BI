@@ -1,0 +1,81 @@
+/* --- Estilos para a página de Chat --- */
+
+/* Container principal que organiza a página verticalmente */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px); /* Ocupa 100% da altura da tela, menos a altura da Navbar */
+  background-color: var(--background);
+}
+
+/* A área onde as mensagens aparecem */
+.chat-window {
+  flex-grow: 1; /* Faz esta área crescer para ocupar o espaço disponível */
+  padding: 20px 40px;
+  overflow-y: auto; /* Adiciona scroll vertical quando as mensagens ultrapassam a altura */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Área inferior que contém o formulário de input */
+.chat-input-area {
+  padding: 20px 40px;
+  background-color: var(--surface);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Formulário de input e botão */
+.chat-input-form {
+  display: flex;
+  gap: 15px; /* Espaço entre o input e o botão */
+  align-items: center;
+}
+
+/* Estilo do campo de input */
+.chat-input-form input {
+  flex-grow: 1; /* Ocupa todo o espaço horizontal disponível */
+  border: 1px solid var(--border-color);
+  background-color: var(--background);
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Efeito de foco para o input */
+.chat-input-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Estilo do botão de enviar */
+.chat-input-form button {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 50%; /* Deixa o botão redondo */
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.5rem; /* Tamanho do ícone */
+  flex-shrink: 0;
+  transition: background-color 0.2s;
+}
+
+/* Efeito de hover para o botão */
+.chat-input-form button:hover {
+  background-color: #7183f2; /* Um tom mais claro do primário */
+}
+
+/* Estilo do botão quando desabilitado */
+.chat-input-form button:disabled {
+  background-color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.5;
+}

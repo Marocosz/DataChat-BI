@@ -1,13 +1,29 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* src/index.css */
+
+/* Define nossa paleta de cores e fontes como variáveis CSS na raiz do documento */
+:root {
+  --font-family: 'Inter', sans-serif;
+  --background: #1a1d24; /* Um azul/cinza escuro profundo */
+  --surface: #272a30;    /* Cor para cards e containers */
+  --primary: #5e72e4;     /* Um azul/roxo vibrante para acentos */
+  --primary-light: rgba(94, 114, 228, 0.1); /* Versão clara do primário para backgrounds */
+  --text-primary: #e8eaed; /* Cor principal do texto (quase branco) */
+  --text-secondary: #8898aa;/* Cor secundária para textos menos importantes */
+  --border-color: #323248;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Aplica estilos globais ao corpo da página */
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+/* Remove estilos padrão de links para customização total */
+a {
+  text-decoration: none;
+  color: inherit;
 }

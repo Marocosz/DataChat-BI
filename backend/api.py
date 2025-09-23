@@ -16,12 +16,14 @@
 # --- Bloco de Importações ---
 import logging
 import json
+import time
 from fastapi import FastAPI
 # Importa o middleware de CORS para permitir a comunicação entre nosso backend e frontend.
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 # Importa a função "maestro" que constrói nossa cadeia de IA completa.
 from app.chains.sql_rag_chain import create_master_chain
+from app.api import dashboard
 
 # --- Configuração do Logging ---
 # Este bloco configura o sistema de logging para toda a aplicação.
@@ -53,6 +55,10 @@ app.add_middleware(
     allow_headers=["*"],    # Permite todos os cabeçalhos HTTP.
 )
 
+# Inclui as rotas definidas em dashboard.py na aplicação principal,
+# com o prefixo /api/dashboard.
+app.include_router(dashboard.router, prefix="/api/dashboard")
+
 # --- Carregamento da Cadeia de IA na Inicialização ---
 # Chamamos a função create_master_chain() UMA VEZ, quando o servidor inicia.
 # O objeto complexo da cadeia é montado e armazenado na variável 'rag_chain'.
@@ -74,10 +80,18 @@ async def chat_endpoint(request: ChatRequest):
     """
     Recebe uma pergunta do frontend, processa na cadeia principal e retorna a resposta.
     """
+    start_time = time.monotonic() # Marca o tempo de início
     try:
         # A cadeia agora sempre retorna um dicionário, seja de um gráfico ou de texto.
         # Aqui, invocamos a cadeia pré-carregada com a pergunta do usuário.
         response_dict = rag_chain.invoke({"question": request.question})
+        
+        end_time = time.monotonic() # Marca o tempo de fim
+        duration = end_time - start_time
+        
+        # Adiciona a nova informação ao dicionário que será enviado ao frontend
+        response_dict['response_time'] = f"{duration:.2f}" 
+        
         # FastAPI converte automaticamente o dicionário Python em uma resposta JSON para o frontend.
         return response_dict
     
