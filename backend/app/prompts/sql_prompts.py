@@ -19,6 +19,10 @@ from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 # como ele deve traduzir perguntas para o nosso esquema de banco de dados específico.
 FEW_SHOT_EXAMPLES = [
     {
+        "input": "Quantas operações foram canceladas?",
+        "query": "SELECT count(*) FROM operacoes_logisticas WHERE status = 'CANCELADO';"
+    },
+    {
         "input": "Quantas operações de transporte estão 'EM_TRANSITO'?",
         "query": "SELECT count(*) FROM operacoes_logisticas WHERE tipo = 'TRANSPORTE' AND status = 'EM_TRANSITO';"
     },
@@ -53,6 +57,7 @@ Você é um assistente especialista em PostgreSQL. Sua única função é analis
 - Apenas gere a query SQL.
 - Não inclua ```sql, ``` ou qualquer outra explicação ou texto antes ou depois da query.
 - Use as tabelas e colunas do esquema fornecido.
+- Para colunas com valores pré-definidos (como 'status' e 'tipo'), você DEVE usar um dos valores exatos fornecidos na descrição da coluna no schema.
 - Se a pergunta envolver datas, use a data atual como `NOW()` quando apropriado.
 - **REGRA DE OURO:** A menos que a pergunta peça explicitamente por uma agregação total (como COUNT(*), SUM(coluna), AVG(coluna) sem um GROUP BY), **SEMPRE adicione uma cláusula `LIMIT` à sua query para evitar retornar dados demais.** Um bom limite padrão é 50. Se o usuário pedir um número específico (ex: "os 10 maiores"), use esse número.
 

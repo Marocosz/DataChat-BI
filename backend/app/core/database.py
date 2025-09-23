@@ -42,22 +42,12 @@ def get_db_connection() -> SQLDatabase:
 
 def get_compact_db_schema() -> str:
     """
-    Gera uma string de schema muito compacta para ser enviada no prompt
-    
-    Esta função se conecta diretamente ao banco, busca os metadados das colunas
-    e formata um texto simples e legível para a IA.
-    
-    Exemplo saída:
-        Tabela: clientes
-        Colunas: id (integer), nome_razao_social (character varying), cnpj_cpf (character varying), email_contato (character varying), telefone_contato (character varying), data_cadastro (timestamp with time zone)
-
-        Tabela: operacoes_logisticas
-        Colunas: id (bigint), codigo_operacao (character varying), tipo (tipo_operacao_logistica), status (status_operacao), cliente_id (integer), data_emissao (timestamp with time zone), data_previsao_entrega (date), data_entrega_realizada (timestamp with time zone), uf_coleta (character varying), cidade_coleta (character varying), uf_destino (character varying), cidade_destino (character varying), peso_kg (numeric), quantidade_volumes (integer), valor_mercadoria (numeric), natureza_carga (character varying), valor_frete (numeric), valor_seguro (numeric), codigo_rastreio (character varying), observacoes (text)
+    Gera uma string de schema muito compacta, incluindo os valores
+    possíveis para os tipos ENUM, para guiar melhor a IA.
     """
     conn = None
     try:
         logger.info("Gerando schema compacto do banco de dados.")
-        # Conecta-se diretamente ao PostgreSQL usando psycopg2 e nossas configurações.
         conn = psycopg2.connect(
             host=settings.DB_HOST,
             dbname=settings.DB_NAME,
@@ -65,36 +55,40 @@ def get_compact_db_schema() -> str:
             password=settings.DB_PASS,
             port=settings.DB_PORT
         )
-
         cur = conn.cursor()
         
         schema_parts = []
         tables = ['clientes', 'operacoes_logisticas']
         
-        # Itera sobre cada tabela para buscar suas colunas.
         for table in tables:
-            # Executa uma query no 'information_schema', que é um banco de dados de metadados padrão do SQL.
             cur.execute(f"""
                 SELECT column_name, data_type 
                 FROM information_schema.columns 
                 WHERE table_name = '{table}'
             """)
-            # Usa "list comprehension" para formatar cada linha de resultado em "nome_coluna (tipo_dado)".
-            columns = [f"{row[0]} ({row[1]})" for row in cur.fetchall()]
-            
-            # Monta a string final para esta tabela e a adiciona à lista.
+            columns = []
+            for row in cur.fetchall():
+                column_name, data_type = row
+                # --- LÓGICA ADICIONADA PARA ENUMs ---
+                # Se o tipo da coluna for um dos nossos ENUMs customizados...
+                if data_type in ['tipo_operacao_logistica', 'status_operacao']:
+                    # ...busca os valores possíveis para esse ENUM.
+                    cur.execute(f"SELECT unnest(enum_range(NULL::{data_type}))::text")
+                    enum_values = [f"'{val[0]}'" for val in cur.fetchall()]
+                    # E adiciona essa informação à descrição da coluna.
+                    columns.append(f"{column_name} ({data_type}, valores possíveis: {', '.join(enum_values)})")
+                else:
+                    columns.append(f"{column_name} ({data_type})")
+                # ------------------------------------
+
             schema_parts.append(f"Tabela: {table}\nColunas: {', '.join(columns)}")
             
         cur.close()
         logger.info("Schema compacto gerado com sucesso.")
-        
-        # Junta as partes do schema com duas quebras de linha para melhor formatação.
         return "\n\n".join(schema_parts)
-    
     except Exception as e:
         logger.error(f"Erro ao gerar schema compacto: {e}")
         return "Erro ao obter schema do banco de dados."
-    
     finally:
         if conn:
             conn.close()
