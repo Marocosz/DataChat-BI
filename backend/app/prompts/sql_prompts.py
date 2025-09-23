@@ -54,6 +54,13 @@ Você é um assistente especialista em PostgreSQL. Sua única função é analis
 - Não inclua ```sql, ``` ou qualquer outra explicação ou texto antes ou depois da query.
 - Use as tabelas e colunas do esquema fornecido.
 - Se a pergunta envolver datas, use a data atual como `NOW()` quando apropriado.
+- **REGRA DE OURO:** A menos que a pergunta peça explicitamente por uma agregação total (como COUNT(*), SUM(coluna), AVG(coluna) sem um GROUP BY), **SEMPRE adicione uma cláusula `LIMIT` à sua query para evitar retornar dados demais.** Um bom limite padrão é 50. Se o usuário pedir um número específico (ex: "os 10 maiores"), use esse número.
+
+Considere o histórico da conversa abaixo para entender o contexto da pergunta atual.
+---
+Histórico da Conversa:
+{chat_history}
+---
 
 Aqui está o esquema do banco de dados:
 {schema}
@@ -70,7 +77,7 @@ SQL_PROMPT = FewShotPromptTemplate(
     example_prompt=EXAMPLE_PROMPT_TEMPLATE,
     prefix=SQL_GENERATION_SYSTEM_PROMPT,
     suffix="User question: {question}\nSQL query:",
-    input_variables=["question", "schema"],
+    input_variables=["question", "schema", "chat_history"],
     example_separator="\n\n"
 )
 """
@@ -82,13 +89,20 @@ Você é um assistente especialista em PostgreSQL. Sua única função é analis
 - Não inclua ```sql, ``` ou qualquer outra explicação ou texto antes ou depois da query.
 - Use as tabelas e colunas do esquema fornecido.
 - Se a pergunta envolver datas, use a data atual como `NOW()` quando apropriado.
+- **REGRA DE OURO:** A menos que a pergunta peça explicitamente por uma agregação total (como COUNT(*), SUM(coluna), AVG(coluna) sem um GROUP BY), **SEMPRE adicione uma cláusula `LIMIT` à sua query para evitar retornar dados demais.** Um bom limite padrão é 50. Se o usuário pedir um número específico (ex: "os 10 maiores"), use esse número.
+
+Considere o histórico da conversa abaixo para entender o contexto da pergunta atual.
+---
+Histórico da Conversa:
+
+---
 
 Aqui está o esquema do banco de dados:
 Tabela: clientes
-Colunas: id (integer), nome_razao_social (character varying), ...
+Colunas: id (integer), nome_razao_social (character varying), cnpj_cpf (character varying), email_contato (character varying), telefone_contato (character varying), data_cadastro (timestamp with time zone)
 
 Tabela: operacoes_logisticas
-Colunas: id (bigint), codigo_operacao (character varying), ...
+Colunas: id (bigint), codigo_operacao (character varying), tipo (tipo_operacao_logistica), status (status_operacao), cliente_id (integer), data_emissao (timestamp with time zone), data_previsao_entrega (date), data_entrega_realizada (timestamp with time zone), uf_coleta (character varying), cidade_coleta (character varying), uf_destino (character varying), cidade_destino (character varying), peso_kg (numeric), quantidade_volumes (integer), valor_mercadoria (numeric), natureza_carga (character varying), valor_frete (numeric), valor_seguro (numeric), codigo_rastreio (character varying), observacoes (text)
 
 Considere os seguintes exemplos de perguntas e queries bem-sucedidas:
 (======================= FIM DO PREFIXO ========================)
@@ -100,15 +114,18 @@ SQL query: SELECT count(*) FROM operacoes_logisticas WHERE tipo = 'TRANSPORTE' A
 User question: Liste os nomes dos clientes que tiveram operações com valor de mercadoria acima de 10.000.
 SQL query: SELECT c.nome_razao_social FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id WHERE o.valor_mercadoria > 10000;
 
- (outros exemplos) ...
+User question: Qual o valor total de frete agrupado por estado de destino (uf_destino)? Apresente os 5 maiores.
+SQL query: SELECT uf_destino, SUM(valor_frete) AS valor_total_frete FROM operacoes_logisticas GROUP BY uf_destino ORDER BY valor_total_frete DESC LIMIT 5;
+
+User question: Qual o prazo médio de entrega para operações já concluídas?
+SQL query: SELECT AVG(data_entrega_realizada - data_emissao) AS prazo_medio FROM operacoes_logisticas WHERE status = 'ENTREGUE';
 (======================== FIM DO RECHEIO =======================)
 
 (======================= INÍCIO DO SUFIXO =======================)
-User question: Quantos clientes temos?
+User question: Qual cliente teve o maior número de operações canceladas?
 SQL query:
 (======================== FIM DO SUFIXO ========================)
 """
-
 
 # --- Bloco 2: Geração da Resposta Final (Analista de Dados) ---
 # Este prompt transforma o resultado bruto do banco de dados em uma resposta
@@ -195,9 +212,15 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
 ROUTER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é classificar o texto do usuário em uma das duas categorias a seguir, com base em sua intenção. Responda APENAS com o nome da categoria, e nada mais.
+    Primeiro, analise o histórico da conversa para obter contexto sobre a pergunta atual.
+
+    ---
+    Histórico da Conversa:
+    {chat_history}
+    ---
 
     CATEGORIAS:
-    - `consulta_ao_banco_de_dados`: Se a pergunta parece ser uma solicitação de dados, insights, relatórios, listas ou informações específicas sobre operações, clientes, fretes, etc.
+    - `consulta_ao_banco_de_dados`: Se a pergunta parece ser uma solicitação de dados, insights, relatórios, listas ou informações específicas sobre operações, clientes, fretes, etc. (incluindo perguntas de acompanhamento como "e o valor dele?").
     - `saudacao_ou_conversa_simples`: Se a pergunta é uma saudação, despedida, agradecimento ou qualquer outra forma de conversa que não busca dados específicos.
 
     Texto do usuário:

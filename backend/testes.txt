@@ -1,0 +1,47 @@
+# ==========================================
+# SCRIPT DE TESTES - SUPPBOT BI
+# ==========================================
+
+# --- Testes de Roteamento e Saudações ---
+Olá
+Bom dia, tudo bem?
+Obrigado
+Tchau
+
+# --- Testes de Consultas Simples (Respostas de Texto) ---
+Qual o status da operação com código de rastreio 'BR123456789SP'?
+Mostre as observações da operação de código 'OP-98765'.
+Qual o email de contato do cliente com CNPJ '12.345.678/0001-99'?
+Qual a data de emissão da operação 'OP-12345'?
+
+# --- Testes de Agregação Simples (Cálculos com Resposta de Texto) ---
+Qual o valor total de todas as mercadorias cadastradas?
+Quantas operações foram canceladas no total?
+Qual o peso médio das cargas?
+Qual foi a data da entrega mais recente que foi realizada?
+
+# --- Testes de Geração de Gráfico de Barras ---
+Me mostre um gráfico com a quantidade de operações por status.
+Qual o valor total de frete agrupado por estado de destino?
+Quais os 5 clientes com o maior valor de mercadoria transportada?
+Gere um gráfico com a quantidade de volumes por tipo de operação.
+
+# --- Testes de Geração de Gráfico de Linha ---
+Me mostre um gráfico de linha com a quantidade de operações criadas por dia no último mês.
+Qual a evolução do valor total de fretes por dia nos últimos 15 dias? Gere um gráfico de linha.
+Gere uma linha do tempo com o número de entregas concluídas por dia.
+
+# --- Testes de Geração de Gráfico de Pizza ---
+Me faça um gráfico de pizza mostrando a distribuição das operações por tipo.
+Qual a proporção de operações por status? Mostre em um gráfico de pizza.
+Gere um gráfico de pizza dos 5 maiores clientes por quantidade de operações.
+
+# --- Testes de Perguntas Complexas (Combinando Lógicas) ---
+Liste os nomes dos clientes e a quantidade de operações em trânsito para cada um, apenas para o estado de São Paulo.
+Qual o cliente que teve a operação com o maior valor de frete que já foi entregue?
+Compare o valor médio de mercadoria entre as operações com status 'ENTREGUE' e 'CANCELADO'.
+Existem operações emitidas em 2024 que pesam mais de 500 kg e foram para o Rio de Janeiro?
+
+# --- Testes de Conversa com Memória ---
+Qual o cliente com o maior número de operações canceladas?
+E qual o valor total de mercadorias desse mesmo cliente?
