@@ -2,28 +2,37 @@
 
 /* Wrapper principal que contém o avatar e o balão da mensagem */
 .message-wrapper {
-  display: flex; /* Usa flexbox para alinhar o avatar e a mensagem lado a lado */
+  display: flex;
   margin-bottom: 20px;
-  max-width: 75%; /* Limita a largura máxima da mensagem para não ocupar a tela inteira */
-  gap: 15px; /* Espaço entre o avatar e o balão */
-  align-items: flex-start; /* Alinha o avatar com o topo do balão de mensagem */
+  max-width: 75%;
+  /* Este é o padrão para mensagens de texto */
+  gap: 15px;
+  align-items: flex-start;
+  transition: max-width 0.3s ease-in-out;
+  /* Adiciona transição suave para a mudança de tamanho */
 }
 
-/* Alinha as mensagens do bot à esquerda */
+/* --- REGRA CRÍTICA PARA O LAYOUT DO GRÁFICO --- */
+/* Quando o wrapper contiver um gráfico, ele poderá ocupar mais espaço na tela */
+.wrapper-has-chart {
+  max-width: 90%;
+  /* Aumenta a largura máxima do container pai */
+}
+
+/* ------------------------------------------- */
+
 .bot-wrapper {
   align-self: flex-start;
 }
 
-/* Alinha as mensagens do usuário à direita e inverte a ordem (avatar vem depois) */
 .user-wrapper {
   align-self: flex-end;
   flex-direction: row-reverse;
 }
 
-/* Estilo do círculo do avatar */
 .avatar {
   background-color: var(--surface);
-  border-radius: 50%; /* Deixa o container perfeitamente redondo */
+  border-radius: 50%;
   width: 40px;
   height: 40px;
   display: flex;
@@ -31,41 +40,46 @@
   justify-content: center;
   font-size: 1.5rem;
   color: var(--text-secondary);
-  flex-shrink: 0; /* Impede que o avatar encolha */
+  flex-shrink: 0;
   border: 1px solid var(--border-color);
 }
 
-/* Cor de destaque para o avatar do usuário */
 .user-wrapper .avatar {
   color: var(--primary);
 }
 
-/* Estilo base para os balões de mensagem */
 .message {
   padding: 12px 18px;
   border-radius: 18px;
   color: var(--text-primary);
   line-height: 1.5;
-  word-wrap: break-word; /* Garante a quebra de linha para palavras longas */
+  word-wrap: break-word;
   position: relative;
 }
 
-/* Estilo específico para o balão do bot */
 .bot-message {
   background-color: var(--surface);
-  border-top-left-radius: 5px; /* "Achata" um dos cantos para dar a aparência de balão */
+  border-top-left-radius: 5px;
 }
 
-/* Estilo específico para o balão do usuário */
 .user-message {
   background-color: var(--primary);
   border-top-right-radius: 5px;
 }
 
-/* Container do gráfico dentro de uma mensagem */
+/* Regra única e correta para o balão de mensagem quando ele contém um gráfico */
+.message.has-chart {
+  width: 100%;
+  /* O balão ocupa 100% do seu pai (que agora está mais largo) */
+  padding: 20px;
+  background-color: var(--surface);
+}
+
 .chart-container {
   min-width: 400px;
+  /* Garante que o gráfico tenha uma largura mínima decente */
   color: var(--text-primary);
+  padding-bottom: 15px;
 }
 
 .chart-container h4 {
@@ -73,7 +87,6 @@
   margin-bottom: 15px;
 }
 
-/* Estilo para o metadado de tempo de resposta */
 .response-time-meta {
   margin-top: 8px;
   font-size: 0.75rem;
@@ -82,7 +95,6 @@
   opacity: 0.8;
 }
 
-/* Animação de "digitando" para o bot */
 .loading-dots div {
   width: 8px;
   height: 8px;
@@ -93,17 +105,23 @@
   animation: bounce 1.4s infinite ease-in-out both;
 }
 
-.loading-dots div:nth-child(1) { animation-delay: -0.32s; }
-.loading-dots div:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots div:nth-child(1) {
+  animation-delay: -0.32s;
+}
 
-.message.has-chart {
-  max-width: 800px; /* Largura máxima maior */
-  width: 100%;      /* Tenta usar 100% da largura disponível até o máximo */
-  padding: 20px;
-  background-color: var(--surface); /* Garante a cor de fundo correta */
+.loading-dots div:nth-child(2) {
+  animation-delay: -0.16s;
 }
 
 @keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1.0); }
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1.0);
+  }
 }

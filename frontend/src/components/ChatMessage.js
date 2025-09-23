@@ -7,11 +7,15 @@ const ChatMessage = ({ sender, content }) => {
   const isBot = sender === 'bot';
   const Avatar = isBot ? FiCpu : FiUser;
 
-  // Lógica para adicionar a classe .has-chart dinamicamente
+  // --- LÓGICA DE CLASSES ATUALIZADA ---
   let messageClasses = `message ${isBot ? 'bot-message' : 'user-message'}`;
+  let wrapperClasses = `message-wrapper ${isBot ? 'bot-wrapper' : 'user-wrapper'}`;
+  
   if (content.type === 'chart') {
     messageClasses += ' has-chart';
+    wrapperClasses += ' wrapper-has-chart'; // Adiciona classe ao wrapper também
   }
+  // ------------------------------------
 
   const renderContent = () => {
     if (content.type === 'chart') {
@@ -21,7 +25,8 @@ const ChatMessage = ({ sender, content }) => {
   };
 
   return (
-    <div className={`message-wrapper ${isBot ? 'bot-wrapper' : 'user-wrapper'}`}>
+    // Usa a nova variável de classes para o wrapper
+    <div className={wrapperClasses}>
       <div className="avatar">
         <Avatar />
       </div>
