@@ -1,25 +1,33 @@
 # =============================================================================
 # API ROUTER PARA O DASHBOARD COM CONNECTION POOLING
+#
+# Este arquivo implementa os endpoints da API para o dashboard, utilizando o framework
+# FastAPI. O principal objetivo é fornecer dados analíticos de forma eficiente e segura
+# a partir do banco de dados PostgreSQL, empregando a técnica de Connection Pooling.
+#
+# O Connection Pooling é uma técnica crucial para o desempenho. Em vez de criar e fechar
+# uma nova conexão para cada requisição (o que é lento e custoso), um "pool" de conexões
+# é mantido aberto. As requisições pegam uma conexão "emprestada", a usam, e a devolvem
+# ao pool, reduzindo a latência e a carga sobre o banco de dados, e prevenindo o "vazamento"
+# de conexões.
 # =============================================================================
 
 import logging
 import psycopg2
-# --- INÍCIO DA ATUALIZAÇÃO 1: Importar o Pool ---
 from psycopg2.pool import SimpleConnectionPool
-# ----------------------------------------------
 from fastapi import APIRouter, HTTPException, status
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# --- INÍCIO DA ATUALIZAÇÃO 2: Criar o Pool de Conexões ---
-# Criamos o pool de conexões UMA VEZ, quando o módulo é carregado.
-# Isso evita o custo de criar conexões novas a cada requisição.
+# Cria o pool de conexões com o banco de dados.
+# Isso é feito apenas UMA VEZ, na inicialização da aplicação,
+# garantindo que o pool esteja pronto para ser usado por todas as requisições.
 try:
     connection_pool = SimpleConnectionPool(
-        minconn=1,  # Número mínimo de conexões a manter abertas
-        maxconn=5,  # Número máximo de conexões a serem abertas
+        minconn=1,  # Número mínimo de conexões a manter abertas.
+        maxconn=5,  # Número máximo de conexões que podem ser abertas sob demanda.
         host=settings.DB_HOST,
         dbname=settings.DB_NAME,
         user=settings.DB_USER,
@@ -29,17 +37,16 @@ try:
     logger.info("Pool de conexões com o banco de dados do dashboard criado com sucesso.")
 except Exception as e:
     logger.error(f"Falha ao criar o pool de conexões do dashboard: {e}")
-    connection_pool = None # Garante que a app possa iniciar mesmo com erro no DB
-# ---------------------------------------------------------
+    # Define o pool como None para que os endpoints saibam que o serviço não está disponível.
+    connection_pool = None
 
-# --- ATUALIZAÇÃO 3: A função antiga get_db_conn() foi REMOVIDA ---
-# Agora cada endpoint gerencia sua própria conexão do pool.
-
+# Agora, cada endpoint usa uma conexão do pool.
 @router.get("/kpis")
 def get_dashboard_kpis():
     """
-    Retorna os KPIs. Agora usa uma conexão do pool.
+    Retorna os principais KPIs do dashboard, como o total de operações e valores.
     """
+    # Verifica se o pool de conexões foi inicializado com sucesso.
     if not connection_pool:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -54,14 +61,15 @@ def get_dashboard_kpis():
         SUM(valor_mercadoria) AS valor_total_mercadorias
     FROM operacoes_logisticas;
     """
-    conn = None # Inicializa a conexão como None
+    conn = None  # Inicializa a variável de conexão.
     try:
-        # Pega uma conexão "emprestada" do pool
+        # Pega uma conexão disponível do pool.
         conn = connection_pool.getconn()
         with conn.cursor() as cur:
             cur.execute(sql)
             kpis = cur.fetchone()
             if kpis:
+                # Retorna os dados como um dicionário.
                 return {
                     "total_operacoes": kpis[0],
                     "operacoes_entregues": kpis[1],
@@ -73,13 +81,16 @@ def get_dashboard_kpis():
         logger.error(f"Erro ao buscar KPIs do dashboard: {e}")
         raise HTTPException(status_code=500, detail="Erro interno ao processar dados do dashboard.")
     finally:
-        # O bloco 'finally' garante que a conexão SEMPRE será devolvida ao pool,
-        # mesmo que ocorra um erro. Isso é CRUCIAL para não vazar conexões.
+        # CRUCIAL: Este bloco garante que a conexão será devolvida ao pool,
+        # mesmo se ocorrer uma exceção. Isso evita que as conexões sejam exauridas.
         if conn:
             connection_pool.putconn(conn)
 
 @router.get("/operacoes_por_status")
 def get_operacoes_por_status():
+    """
+    Retorna a contagem de operações agrupadas por status.
+    """
     if not connection_pool:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
         
@@ -90,6 +101,7 @@ def get_operacoes_por_status():
         with conn.cursor() as cur:
             cur.execute(sql)
             data = cur.fetchall()
+            # Converte a lista de tuplas em uma lista de dicionários para a resposta JSON.
             return [{"name": str(row[0]), "value": row[1]} for row in data]
     finally:
         if conn:
@@ -97,6 +109,9 @@ def get_operacoes_por_status():
 
 @router.get("/valor_frete_por_uf")
 def get_valor_frete_por_uf():
+    """
+    Retorna o valor total de frete por estado de destino.
+    """
     if not connection_pool:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
         
@@ -121,6 +136,9 @@ def get_valor_frete_por_uf():
 
 @router.get("/operacoes_por_dia")
 def get_operacoes_por_dia():
+    """
+    Retorna a contagem de operações por dia nos últimos 30 dias.
+    """
     if not connection_pool:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
         
@@ -137,6 +155,7 @@ def get_operacoes_por_dia():
         with conn.cursor() as cur:
             cur.execute(sql)
             data = cur.fetchall()
+            # Formata a data para um formato mais amigável para o front-end.
             return [{"name": row[0].strftime('%d/%m'), "value": row[1]} for row in data]
     finally:
         if conn:
@@ -144,6 +163,9 @@ def get_operacoes_por_dia():
 
 @router.get("/top_clientes_por_valor")
 def get_top_clientes_por_valor():
+    """
+    Retorna os 5 clientes com o maior valor total de mercadorias.
+    """
     if not connection_pool:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
         

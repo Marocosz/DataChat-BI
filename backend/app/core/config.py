@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     )
 
     # --- Definição dos Atributos de Configuração ---
-
+    
     # Credenciais do Groq
     GROQ_API_KEY: str
 

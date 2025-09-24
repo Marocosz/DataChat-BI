@@ -1,11 +1,11 @@
-# =============================================================================
+# ================================================================================================================
 # ARQUIVO DE PROMPTS - O CÉREBRO CONVERSACIONAL DA APLICAÇÃO "prompt engineering".
 #
 # Este arquivo centraliza todas as instruções (prompts) que guiam o
 # comportamento dos modelos de linguagem (LLMs). Cada variável aqui define uma
 # tarefa específica, como gerar SQL, classificar a intenção do usuário ou
 # formatar a resposta final.
-# =============================================================================
+# ================================================================================================================
 
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 
@@ -93,6 +93,19 @@ SQL_PROMPT = FewShotPromptTemplate(
     example_separator="\n\n"
 )
 
+# --- Exemplo de Saída do Bloco 1 ---
+"""
+INPUT:
+question = "Quantas operações foram canceladas no último mês?"
+schema = "CREATE TABLE operacoes_logisticas (id SERIAL, status VARCHAR, data_emissao DATE);"
+chat_history = "Histórico da conversa: user: Qual o total de operações? assistant: O total de operações é 1500."
+previous_sql = "SELECT COUNT(*) FROM operacoes_logisticas;"
+
+SAÍDA GERADA PELO PROMPT:
+SELECT COUNT(*) FROM operacoes_logisticas WHERE status = 'CANCELADO' AND data_emissao >= '2023-08-01' AND data_emissao <= '2023-08-31';
+"""
+
+
 # --- Bloco 2: Geração da Resposta Final (Analista de Dados) ---
 FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
@@ -135,6 +148,39 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
 )
 
+# --- Exemplo de Saída do Bloco 2 ---
+"""
+INPUT:
+question = "Quantas operações foram canceladas?"
+result = "[('count', 123)]"
+format_instructions = "The output must be a valid JSON. See above."
+
+SAÍDA GERADA PELO PROMPT:
+{
+    "type": "text",
+    "content": "Houve 123 operações canceladas."
+}
+"""
+
+"""
+INPUT:
+question = "Qual o valor total de frete para cada estado de destino?"
+result = "[('SP', 50000.00), ('MG', 30000.00), ('RJ', 25000.00)]"
+format_instructions = "The output must be a valid JSON. See above."
+
+SAÍDA GERADA PELO PROMPT:
+{
+    "type": "chart",
+    "chart_type": "bar",
+    "title": "Valor Total de Frete por Estado de Destino",
+    "data": [{"uf_destino": "SP", "valor_total_frete": 50000.00}, {"uf_destino": "MG", "valor_total_frete": 30000.00}, {"uf_destino": "RJ", "valor_total_frete": 25000.00}],
+    "x_axis": "uf_destino",
+    "y_axis": ["valor_total_frete"],
+    "y_axis_label": "Valor Total Frete (R$)"
+}
+"""
+
+
 # --- Bloco 3: Roteador de Intenção ---
 ROUTER_PROMPT = PromptTemplate.from_template(
     """
@@ -155,3 +201,22 @@ ROUTER_PROMPT = PromptTemplate.from_template(
     Categoria:
     """
 )
+
+# --- Exemplo de Saída do Bloco 3 ---
+"""
+INPUT:
+question = "Olá, como você está?"
+chat_history = ""
+
+SAÍDA GERADA PELO PROMPT:
+saudacao_ou_conversa_simples
+"""
+
+"""
+INPUT:
+question = "Quantas operações foram concluídas?"
+chat_history = "Histórico: N/A"
+
+SAÍDA GERADA PELO PROMPT:
+consulta_ao_banco_de_dados
+"""

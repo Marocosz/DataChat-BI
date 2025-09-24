@@ -8,26 +8,30 @@
 #    enviada como CONTEXTO para o LLM, evitando erros de requisição muito grande.
 # =============================================================================
 
-# --- Bloco de Importações ---
-import logging # Importa a biblioteca de logging para registrar informações e erros.
+import logging
 import psycopg2
 from langchain_community.utilities import SQLDatabase
 from .config import settings
 
-# --- Instanciação do Logger ---
-# Obtém um logger específico para este módulo, o que ajuda a identificar a origem das mensagens de log.
+# Obtém um logger específico para este módulo.
 logger = logging.getLogger(__name__)
 
-# Variável global para armazenar o schema em cache.
+# Variável global para armazenar o schema em cache, evitando múltiplas chamadas ao DB.
 _cached_schema: str | None = None
 
 def get_db_connection() -> SQLDatabase:
     """
     Cria a conexão principal do LangChain, que será usada para EXECUTAR as queries SQL
     geradas pela IA.
+
+    Returns:
+        Uma instância de SQLDatabase configurada para o banco de dados do projeto.
+    
+    Raises:
+        Exception: Se a conexão com o banco de dados falhar.
     """
     try:
-        # Usa um método do LangChain para criar a conexão a partir da URI que montamos no config.py.
+        # Usa um método do LangChain para criar a conexão a partir da URI.
         db = SQLDatabase.from_uri(
             settings.DATABASE_URI,
             # Limita as tabelas que o LangChain "enxerga", por segurança e para manter o foco.
@@ -41,6 +45,7 @@ def get_db_connection() -> SQLDatabase:
     
     except Exception as e:
         logger.error(f"Falha ao conectar com o banco de dados (LangChain): {e}")
+        # Re-lança a exceção para que o erro seja tratado em um nível superior.
         raise
 
 def _generate_compact_db_schema() -> str:
@@ -48,10 +53,14 @@ def _generate_compact_db_schema() -> str:
     Gera uma string de schema muito compacta, incluindo os valores
     possíveis para os tipos ENUM, para guiar melhor a IA.
     Esta função se conecta ao banco e faz o trabalho pesado.
+
+    Returns:
+        Uma string formatada com o esquema do banco de dados.
     """
     conn = None
     try:
         logger.info("Gerando schema compacto do banco de dados a partir do DB...")
+        # Cria uma conexão direta usando psycopg2 para extrair informações do schema.
         conn = psycopg2.connect(
             host=settings.DB_HOST,
             dbname=settings.DB_NAME,
@@ -65,6 +74,7 @@ def _generate_compact_db_schema() -> str:
         tables = ['clientes', 'operacoes_logisticas']
         
         for table in tables:
+            # Consulta as colunas e tipos de dados de cada tabela.
             cur.execute(f"""
                 SELECT column_name, data_type 
                 FROM information_schema.columns 
@@ -73,6 +83,7 @@ def _generate_compact_db_schema() -> str:
             columns = []
             for row in cur.fetchall():
                 column_name, data_type = row
+                # Para colunas ENUM, busca os valores possíveis para adicionar ao schema.
                 if data_type in ['tipo_operacao_logistica', 'status_operacao']:
                     cur.execute(f"SELECT unnest(enum_range(NULL::{data_type}))::text")
                     enum_values = [f"'{val[0]}'" for val in cur.fetchall()]
@@ -89,22 +100,26 @@ def _generate_compact_db_schema() -> str:
         logger.error(f"Erro ao gerar schema compacto: {e}")
         return "Erro ao obter schema do banco de dados."
     finally:
+        # Fecha a conexão direta para liberar recursos.
         if conn:
             conn.close()
 
 def get_compact_db_schema() -> str:
     """
-    Função pública que retorna o schema do banco de dados, utilizando um cache
-    para evitar múltiplas chamadas ao banco.
+    Função pública que retorna o schema do banco de dados.
+    Ela utiliza um sistema de cache para evitar múltiplas chamadas ao banco,
+    gerando o schema apenas na primeira vez que é solicitado.
+
+    Returns:
+        A string contendo o esquema do banco de dados.
     """
     global _cached_schema
-    # Se o cache estiver vazio (None), chama a função geradora.
+    # Se o cache estiver vazio, chama a função geradora.
     if _cached_schema is None:
         _cached_schema = _generate_compact_db_schema()
     
     # Retorna o schema que está em cache.
     return _cached_schema
 
-# --- Instanciação da Conexão ---
 # Cria uma instância única da conexão do LangChain quando a aplicação é iniciada.
 db_instance = get_db_connection()
