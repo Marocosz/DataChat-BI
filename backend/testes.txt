@@ -9,7 +9,8 @@ Obrigado
 Tchau
 
 # --- Testes de Consultas Simples (Respostas de Texto) ---
-Qual o status da operação com código de rastreio 'BR123456789SP'?
+Qual o status da operação com código de rastreio 'BR123456789SP'? # Não existe
+Qual o status da operação com código de rastreio 'VV820450103ER'? # Existe
 Mostre as observações da operação de código 'OP-98765'.
 Qual o email de contato do cliente com CNPJ '12.345.678/0001-99'?
 Qual a data de emissão da operação 'OP-12345'?

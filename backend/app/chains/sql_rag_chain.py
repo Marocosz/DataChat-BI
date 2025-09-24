@@ -52,25 +52,42 @@ def create_master_chain() -> Runnable:
         return data
 
     def execute_sql_query(query: str) -> str:
-        """Executa a query SQL e adiciona um LIMIT de segurança."""
+        """
+        Executa a query SQL e adiciona um LIMIT de segurança.
+        Retorna uma mensagem de erro específica se a query não retornar dados.
+        """
         logger.info(f"Executando a query SQL: {query}")
         query_lower = query.lower()
-        # Refinamento: Não adicionar LIMIT se já existir ou for agregação sem GROUP BY
+
+        # Adiciona LIMIT 100 para evitar consultas muito grandes, a menos que já exista ou seja uma agregação
         is_aggregation = any(agg in query_lower for agg in ["count(", "sum(", "avg("])
         has_group_by = "group by" in query_lower
+        has_limit = "limit" in query_lower
 
-        if query_lower.strip().startswith("select") and "limit" not in query_lower:
+        if query_lower.strip().startswith("select") and not has_limit:
             if not is_aggregation or has_group_by:
                 if query.strip().endswith(';'):
                     query = query.strip()[:-1] + " LIMIT 100;"
                 else:
                     query = query.strip() + " LIMIT 100;"
                 logger.warning(f"Query modificada para incluir LIMIT: {query}")
+                
         try:
-            return db_instance.run(query, include_columns=True)
+            result = db_instance.run(query, include_columns=True)
+            
+            # ===> Ponto de atenção: Verificação de resultado vazio
+            # '[]' é a representação de uma lista vazia, que pode ser retornada pelo LangChain
+            # quando a query não encontra nenhuma linha.
+            if not result or result == '[]':
+                logger.warning("Query retornou resultado vazio. Informando ao LLM.")
+                return "RESULTADO_VAZIO: Nenhuma informação encontrada para a sua solicitação."
+            
+            logger.info(f"===> RESULTADO BRUTO DO DB (VIA LANGCHAIN): {result!r}")
+            return result
+            
         except Exception as e:
             logger.error(f"Erro ao executar a query: {e}")
-            return f"Erro: A query falhou. Causa: {e}. Tente reformular a pergunta."
+            return f"ERRO_DB: A query falhou. Causa: {e}. Tente reformular a pergunta."
     
     parser = JsonOutputParser()
 

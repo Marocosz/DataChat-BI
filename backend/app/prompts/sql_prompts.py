@@ -104,6 +104,7 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     2. Se for valor único, lista simples ou texto, responda em JSON de texto.
     3. Nunca responda em texto puro. Sempre JSON válido.
     4. Se o usuário pedir um tipo de gráfico, use-o. Senão, escolha o mais apropriado.
+    5. Se o 'Resultado do Banco de Dados' for `RESULTADO_VAZIO: ...`, sua resposta deve ser um JSON de texto informando que os dados não foram encontrados. Nunca invente uma resposta.
 
     ---
     **Formato JSON para gráficos:**
