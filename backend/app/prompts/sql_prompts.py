@@ -18,9 +18,6 @@ from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 # Ela funciona como um "gabarito" que ensina o LLM, através de exemplos,
 # como traduzir perguntas para o esquema do banco de dados específico.
 FEW_SHOT_EXAMPLES = [
-    # -------------------------------------------------------------------------
-    # Exemplos Originais
-    # -------------------------------------------------------------------------
     {
         "input": "Quantas operações foram canceladas?",
         "query": "SELECT count(*) FROM operacoes_logisticas WHERE status = 'CANCELADO';"
@@ -30,68 +27,20 @@ FEW_SHOT_EXAMPLES = [
         "query": "SELECT count(*) FROM operacoes_logisticas WHERE tipo = 'TRANSPORTE' AND status = 'EM_TRANSITO';"
     },
     {
-        "input": "Liste os nomes dos clientes que tiveram operações com valor de mercadoria acima de 10.000.",
-        "query": "SELECT c.nome_razao_social FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id WHERE o.valor_mercadoria > 10000;"
+        "input": "Liste os nomes dos 5 clientes com operações de valor acima de 10.000.",
+        "query": "SELECT c.nome_razao_social FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id WHERE o.valor_mercadoria > 10000 LIMIT 5;"
     },
     {
-        "input": "Qual o valor total de frete agrupado por estado de destino (uf_destino)? Apresente os 5 maiores.",
+        "input": "Qual o valor total de frete para cada estado de destino? Mostre os 5 maiores.",
         "query": "SELECT uf_destino, SUM(valor_frete) AS valor_total_frete FROM operacoes_logisticas GROUP BY uf_destino ORDER BY valor_total_frete DESC LIMIT 5;"
     },
     {
         "input": "Qual o prazo médio de entrega para operações já concluídas?",
         "query": "SELECT AVG(data_entrega_realizada - data_emissao) AS prazo_medio FROM operacoes_logisticas WHERE status = 'ENTREGUE';"
     },
-
-    # -------------------------------------------------------------------------
-    # Novos exemplos: Perguntas de acompanhamento (contexto)
-    # -------------------------------------------------------------------------
-
-    # --- CENÁRIO 1: Lógica baseada em SOMA (SUM) ---
     {
-        # Pergunta 1: Estabelece um contexto (o cliente com maior valor).
         "input": "Qual o cliente com maior valor total de mercadorias?",
         "query": "SELECT c.nome_razao_social, SUM(o.valor_mercadoria) as total_valor FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id GROUP BY c.nome_razao_social ORDER BY total_valor DESC LIMIT 1;"
-    },
-    {
-        "input": "e quantas operações ele teve no total?",
-        "query": """SELECT COUNT(o.id) 
-FROM operacoes_logisticas o 
-JOIN clientes c ON o.cliente_id = c.id 
-WHERE c.nome_razao_social = (
-    SELECT c.nome_razao_social 
-    FROM clientes c 
-    JOIN operacoes_logisticas o ON c.id = o.cliente_id 
-    GROUP BY c.nome_razao_social 
-    ORDER BY SUM(o.valor_mercadoria) DESC 
-    LIMIT 1
-);"""
-    },
-
-    # --- Cenário 2: Lógica baseada em COUNT + WHERE ---
-    {
-        "input": "Qual cliente teve o maior número de operações canceladas?",
-        "query": """SELECT c.nome_razao_social 
-FROM clientes c 
-JOIN operacoes_logisticas o ON c.id = o.cliente_id 
-WHERE o.status = 'CANCELADO' 
-GROUP BY c.nome_razao_social 
-ORDER BY COUNT(o.id) DESC 
-LIMIT 1;"""
-    },
-    {
-        "input": "e qual o valor médio de mercadoria dele?",
-        "query": """SELECT AVG(o.valor_mercadoria) 
-FROM operacoes_logisticas o 
-JOIN clientes c ON o.cliente_id = c.id 
-WHERE c.nome_razao_social = (
-    SELECT c.nome_razao_social 
-    FROM clientes c 
-    JOIN operacoes_logisticas o ON c.id = o.cliente_id 
-    WHERE o.status = 'CANCELADO' 
-    GROUP BY c.nome_razao_social 
-    ORDER BY COUNT(o.id) DESC 
-    LIMIT 1
-);"""
     }
 ]
 
@@ -102,31 +51,34 @@ EXAMPLE_PROMPT_TEMPLATE = PromptTemplate.from_template(
 
 # Prompt principal para geração de SQL
 SQL_GENERATION_SYSTEM_PROMPT = """
-Você é um assistente especialista em PostgreSQL. Sua única função é analisar a pergunta de um usuário e o esquema de um banco de dados para gerar uma query SQL sintaticamente correta.
+Você é um assistente especialista em PostgreSQL. Sua principal tarefa é gerar uma única query SQL com base na pergunta do usuário e no contexto fornecido.
 
-**Regras Importantes:**
-- Apenas gere a query SQL.
-- Não inclua ```sql, ``` ou qualquer outra explicação ou texto antes ou depois da query.
-- Use as tabelas e colunas do esquema fornecido.
-- Para colunas com valores pré-definidos (como 'status' e 'tipo'), você DEVE usar os valores exatos fornecidos.
-- Se a pergunta envolver datas, use a data atual como `NOW()` quando apropriado.
-- **Regra de Ouro:** A menos que a pergunta peça explicitamente por uma agregação total (COUNT, SUM, AVG sem GROUP BY), **sempre adicione `LIMIT`** para evitar excesso de dados. Padrão = 50. Se o usuário pedir um número específico, use-o.
+Pense passo a passo antes de gerar a query:
 
+**Passo 1: Analise a Pergunta Atual do Usuário.**
+- Se a pergunta é completa e não depende do histórico (ex: "Qual o valor total de frete?"), sua tarefa é simplesmente traduzir essa pergunta para SQL. Pule para o Passo 3.
+- Se a pergunta é um acompanhamento que usa termos como 'ele', 'dela', 'disso', ou é uma frase incompleta (ex: "e o total de operações?"), ela depende do contexto. Vá para o Passo 2.
+
+**Passo 2: Analise o Contexto da Conversa.**
+- Olhe a "Query SQL da Última Pergunta". Ela é a fonte da verdade para o contexto.
+- A query anterior identificou uma entidade principal (ex: o cliente 'Porto', encontrado com a lógica `ORDER BY SUM(...)`).
+- Sua nova query DEVE filtrar os resultados usando a lógica EXATA da query anterior dentro de uma cláusula `WHERE` com uma subquery.
+
+**Passo 3: Construa a Query Final.**
+- Com base na sua análise, construa a query SQL.
+- A query deve ser sintaticamente correta para PostgreSQL.
+- Siga as regras gerais: não inclua explicações ou ```sql``` na saída, apenas o código da query.
+
+**Sua Resposta Final DEVE SER APENAS O CÓDIGO SQL.**
 ---
-**Contexto da Conversa:**
-- Perguntas podem ser continuação da anterior. **Preste atenção ao histórico.**
-- Resolva pronomes (ele, dela, isso, último) com base na **entidade principal da pergunta anterior**.
-- Se a pergunta anterior envolveu lógica complexa para encontrar uma entidade (ex: maior faturamento), a atual **deve reutilizar a mesma lógica** em subquery ou WHERE. **Não altere a lógica de seleção do contexto.**
----
-
 Histórico da Conversa:
 {chat_history}
-
-A query SQL gerada para a última pergunta foi:
+---
+Query SQL da Última Pergunta:
+```sql
 {previous_sql}
 
-Aqui está o esquema do banco de dados:
-{schema}
+Aqui está o esquema do banco de dados: {schema}
 
 Considere os seguintes exemplos de perguntas e queries bem-sucedidas:
 """
