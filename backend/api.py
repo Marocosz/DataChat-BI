@@ -56,10 +56,12 @@ async def chat_endpoint(request: ChatRequest):
     
     try:
         # A chamada à cadeia agora precisa de uma configuração especial para passar o session_id
-        response_dict = rag_chain.invoke(
+        full_chain_output = rag_chain.invoke(
             {"question": request.question},
             config={"configurable": {"session_id": session_id}}
         )
+        
+        response_dict = full_chain_output.get("api_response", {})
         
         end_time = time.monotonic()
         duration = end_time - start_time
