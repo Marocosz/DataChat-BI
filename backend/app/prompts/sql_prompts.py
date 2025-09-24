@@ -18,6 +18,9 @@ from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 # Ela funciona como um "gabarito" ou "cola" que ensina o LLM, através de exemplos,
 # como ele deve traduzir perguntas para o nosso esquema de banco de dados específico.
 FEW_SHOT_EXAMPLES = [
+    # -----------------------------------------------------------------------------
+    # Exemplos Originais de Pergunta Única
+    # -----------------------------------------------------------------------------
     {
         "input": "Quantas operações foram canceladas?",
         "query": "SELECT count(*) FROM operacoes_logisticas WHERE status = 'CANCELADO';"
@@ -37,6 +40,63 @@ FEW_SHOT_EXAMPLES = [
     {
         "input": "Qual o prazo médio de entrega para operações já concluídas?",
         "query": "SELECT AVG(data_entrega_realizada - data_emissao) AS prazo_medio FROM operacoes_logisticas WHERE status = 'ENTREGUE';"
+    },
+
+    # =============================================================================
+    # NOVOS EXEMPLOS PARA ENSINAR SOBRE PERGUNTAS DE ACOMPANHAMENTO (CONTEXTO)
+    # =============================================================================
+
+    # --- CENÁRIO 1: Lógica baseada em SOMA (SUM) ---
+    {
+        # Pergunta 1: Estabelece um contexto (o cliente com maior valor).
+        "input": "Qual o cliente com maior valor total de mercadorias?",
+        "query": "SELECT c.nome_razao_social FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id GROUP BY c.nome_razao_social ORDER BY SUM(o.valor_mercadoria) DESC LIMIT 1;"
+    },
+    {
+        # Pergunta 2: É uma continuação da anterior ("ele").
+        "input": "e quantas operações ele teve no total?",
+        # A query ensina o modelo a aninhar a LÓGICA da pergunta anterior.
+        "query": """SELECT COUNT(o.id) 
+FROM operacoes_logisticas o 
+JOIN clientes c ON o.cliente_id = c.id 
+WHERE c.nome_razao_social = (
+    SELECT c.nome_razao_social 
+    FROM clientes c 
+    JOIN operacoes_logisticas o ON c.id = o.cliente_id 
+    GROUP BY c.nome_razao_social 
+    ORDER BY SUM(o.valor_mercadoria) DESC 
+    LIMIT 1
+);"""
+    },
+
+    # --- CENÁRIO 2: Lógica baseada em CONTAGEM (COUNT) e FILTRO (WHERE) ---
+    {
+        # Pergunta 1: Estabelece um novo contexto (o cliente com mais cancelamentos).
+        "input": "Qual cliente teve o maior número de operações canceladas?",
+        "query": """SELECT c.nome_razao_social 
+FROM clientes c 
+JOIN operacoes_logisticas o ON c.id = o.cliente_id 
+WHERE o.status = 'CANCELADO' 
+GROUP BY c.nome_razao_social 
+ORDER BY COUNT(o.id) DESC 
+LIMIT 1;"""
+    },
+    {
+        # Pergunta 2: É uma continuação, mas agora a IA deve usar a lógica de COUNT + WHERE.
+        "input": "e qual o valor médio de mercadoria dele?",
+        # A query ensina o modelo a aninhar a LÓGICA correta da pergunta anterior.
+        "query": """SELECT AVG(o.valor_mercadoria) 
+FROM operacoes_logisticas o 
+JOIN clientes c ON o.cliente_id = c.id 
+WHERE c.nome_razao_social = (
+    SELECT c.nome_razao_social 
+    FROM clientes c 
+    JOIN operacoes_logisticas o ON c.id = o.cliente_id 
+    WHERE o.status = 'CANCELADO' 
+    GROUP BY c.nome_razao_social 
+    ORDER BY COUNT(o.id) DESC 
+    LIMIT 1
+);"""
     }
 ]
 

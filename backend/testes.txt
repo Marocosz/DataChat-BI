@@ -38,10 +38,28 @@ Gere um gráfico de pizza dos 5 maiores clientes por quantidade de operações.
 
 # --- Testes de Perguntas Complexas (Combinando Lógicas) ---
 Liste os nomes dos clientes e a quantidade de operações em trânsito para cada um, apenas para o estado de São Paulo.
-Qual o cliente que teve a operação com o maior valor de frete que já foi entregue?
+Qual o cliente que teve a operation com o maior valor de frete que já foi entregue?
 Compare o valor médio de mercadoria entre as operações com status 'ENTREGUE' e 'CANCELADO'.
 Existem operações emitidas em 2024 que pesam mais de 500 kg e foram para o Rio de Janeiro?
 
 # --- Testes de Conversa com Memória ---
+
+# Cenário 1: Teste Direto (Padrão exato dos exemplos Few-Shot)
+# Objetivo: Garantir que a IA aprendeu a lição do exemplo com SUM.
+Qual o cliente com maior valor total de mercadorias?
+e quantas operações ele teve no total?
+
+# Cenário 2: Testando o Problema Original (Generalização com COUNT e WHERE)
+# Objetivo: Garantir que a IA aplica o aprendizado para o problema original.
 Qual o cliente com o maior número de operações canceladas?
 E qual o valor total de mercadorias desse mesmo cliente?
+
+# Cenário 3: Testando a Generalização (Métricas Geográficas)
+# Objetivo: Verificar se a IA consegue adaptar a lógica para colunas e agregações diferentes.
+Qual o estado (UF) de destino com o maior valor de frete?
+e quantas operações foram para lá?
+
+# Cenário 4: Teste de Resistência (Lógica mais Complexa com AVG)
+# Objetivo: Levar a capacidade de raciocínio da IA ao limite.
+Qual a natureza de carga com o maior peso médio por operação?
+qual o valor total de frete para essa natureza de carga?
