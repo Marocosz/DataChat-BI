@@ -55,8 +55,6 @@ function Dashboard() {
 
   const COLORS = ['#5e72e4', '#2dce89', '#ff8d4e', '#f5365c', '#11cdef'];
 
-  // --- INÍCIO DA ATUALIZAÇÃO: LÓGICA DE BUSCA DE DADOS CORRIGIDA ---
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Definimos a função de busca de dados aqui dentro
     const fetchData = async () => {
