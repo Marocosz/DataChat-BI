@@ -67,7 +67,7 @@ def create_master_chain() -> Runnable:
                     query = query.strip() + " LIMIT 100;"
                 logger.warning(f"Query modificada para incluir LIMIT: {query}")
         try:
-            return db_instance.run(query)
+            return db_instance.run(query, include_columns=True)
         except Exception as e:
             logger.error(f"Erro ao executar a query: {e}")
             return f"Erro: A query falhou. Causa: {e}. Tente reformular a pergunta."
@@ -106,13 +106,20 @@ def create_master_chain() -> Runnable:
         | StrOutputParser()
     )
     
-    # Cadeia de SQL Completa: Agora com passo extra para atualizar o 'last_sql'.
+    def execute_and_log_query(data: dict) -> str:
+        """Executa a query e loga o resultado bruto retornado pelo LangChain."""
+        query = data["generated_sql"]
+        result = execute_sql_query(query)
+        # A linha mais importante do nosso debug:
+        logger.info(f"===> RESULTADO BRUTO DO DB (VIA LANGCHAIN): {result!r}")
+        return result
+
+    # Cadeia de SQL Completa: Agora com passo extra para logar o resultado.
     sql_chain = (
         RunnablePassthrough.assign(generated_sql=sql_generation_chain)
-        # Este passo é crucial: depois de gerar o SQL, usamos um Lambda
-        # para chamar nossa função e ATUALIZAR o 'store' com o novo SQL.
         .assign(
-            query_result=lambda x: execute_sql_query(x["generated_sql"]),
+            # Usamos nossa nova função aqui para capturar e logar o resultado
+            query_result=execute_and_log_query,
             _update_sql=lambda x, config: update_last_sql(config["configurable"]["session_id"], x["generated_sql"])
         )
         | {

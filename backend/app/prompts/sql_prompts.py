@@ -46,15 +46,11 @@ FEW_SHOT_EXAMPLES = [
     # Novos exemplos: Perguntas de acompanhamento (contexto)
     # -------------------------------------------------------------------------
 
-    # --- Cenário 1: Lógica baseada em SUM ---
+    # --- CENÁRIO 1: Lógica baseada em SOMA (SUM) ---
     {
+        # Pergunta 1: Estabelece um contexto (o cliente com maior valor).
         "input": "Qual o cliente com maior valor total de mercadorias?",
-        "query": """SELECT c.nome_razao_social 
-FROM clientes c 
-JOIN operacoes_logisticas o ON c.id = o.cliente_id 
-GROUP BY c.nome_razao_social 
-ORDER BY SUM(o.valor_mercadoria) DESC 
-LIMIT 1;"""
+        "query": "SELECT c.nome_razao_social, SUM(o.valor_mercadoria) as total_valor FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id GROUP BY c.nome_razao_social ORDER BY total_valor DESC LIMIT 1;"
     },
     {
         "input": "e quantas operações ele teve no total?",
