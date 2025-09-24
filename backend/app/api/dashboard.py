@@ -1,56 +1,51 @@
 # =============================================================================
-# API ROUTER PARA O DASHBOARD
-#
-# Este módulo define os endpoints específicos para fornecer dados agregados
-# para a página de dashboard do frontend.
-#
-# Usamos um APIRouter para agrupar estas rotas relacionadas, o que torna
-# a aplicação principal mais modular e fácil de manter.
+# API ROUTER PARA O DASHBOARD COM CONNECTION POOLING
 # =============================================================================
 
 import logging
-# Usamos o psycopg2 para executar queries SQL diretas e otimizadas para o dashboard.
 import psycopg2
-# APIRouter nos permite criar um conjunto de rotas que podem ser importadas na app principal.
-# HTTPException é usado para retornar erros HTTP de forma padronizada.
-from fastapi import APIRouter, HTTPException
-# Importamos nossas configurações para obter as credenciais do banco de dados.
+# --- INÍCIO DA ATUALIZAÇÃO 1: Importar o Pool ---
+from psycopg2.pool import SimpleConnectionPool
+# ----------------------------------------------
+from fastapi import APIRouter, HTTPException, status
 from app.core.config import settings
 
-# --- Configuração Inicial ---
-# Cria um logger e um router específicos para este módulo.
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-def get_db_conn():
-    """
-    Função auxiliar para criar e retornar uma conexão com o banco de dados.
-    Centraliza a lógica de conexão e o tratamento de erros iniciais.
-    """
-    try:
-        conn = psycopg2.connect(
-            host=settings.DB_HOST,
-            dbname=settings.DB_NAME,
-            user=settings.DB_USER,
-            password=settings.DB_PASS,
-            port=settings.DB_PORT
-        )
-        return conn
-    except Exception as e:
-        # Se a conexão falhar, loga o erro e levanta uma exceção HTTP 500.
-        logger.error(f"Erro de conexão com o banco de dados: {e}")
-        raise HTTPException(status_code=500, detail="Não foi possível conectar ao banco de dados.")
+# --- INÍCIO DA ATUALIZAÇÃO 2: Criar o Pool de Conexões ---
+# Criamos o pool de conexões UMA VEZ, quando o módulo é carregado.
+# Isso evita o custo de criar conexões novas a cada requisição.
+try:
+    connection_pool = SimpleConnectionPool(
+        minconn=1,  # Número mínimo de conexões a manter abertas
+        maxconn=5,  # Número máximo de conexões a serem abertas
+        host=settings.DB_HOST,
+        dbname=settings.DB_NAME,
+        user=settings.DB_USER,
+        password=settings.DB_PASS,
+        port=settings.DB_PORT
+    )
+    logger.info("Pool de conexões com o banco de dados do dashboard criado com sucesso.")
+except Exception as e:
+    logger.error(f"Falha ao criar o pool de conexões do dashboard: {e}")
+    connection_pool = None # Garante que a app possa iniciar mesmo com erro no DB
+# ---------------------------------------------------------
 
-# --- Definição dos Endpoints ---
+# --- ATUALIZAÇÃO 3: A função antiga get_db_conn() foi REMOVIDA ---
+# Agora cada endpoint gerencia sua própria conexão do pool.
 
-# Define a rota GET para /api/dashboard/kpis
 @router.get("/kpis")
 def get_dashboard_kpis():
     """
-    Retorna os principais indicadores de desempenho (KPIs) para os cards do dashboard.
-    Executa uma única query otimizada para buscar todos os KPIs de uma vez.
+    Retorna os KPIs. Agora usa uma conexão do pool.
     """
-    # Query SQL que calcula os KPIs de forma agregada.
+    if not connection_pool:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço de banco de dados indisponível."
+        )
+
     sql = """
     SELECT
         COUNT(*) AS total_operacoes,
@@ -59,54 +54,52 @@ def get_dashboard_kpis():
         SUM(valor_mercadoria) AS valor_total_mercadorias
     FROM operacoes_logisticas;
     """
-    conn = get_db_conn()
+    conn = None # Inicializa a conexão como None
     try:
-        # O 'with' garante que o cursor será fechado automaticamente.
+        # Pega uma conexão "emprestada" do pool
+        conn = connection_pool.getconn()
         with conn.cursor() as cur:
             cur.execute(sql)
-            # .fetchone() pega a primeira (e única) linha do resultado.
             kpis = cur.fetchone()
             if kpis:
-                # Monta o dicionário de resposta com os resultados da query.
                 return {
                     "total_operacoes": kpis[0],
                     "operacoes_entregues": kpis[1],
                     "operacoes_em_transito": kpis[2],
-                    # Converte o tipo 'Decimal' do banco para 'float' para ser compatível com JSON.
                     "valor_total_mercadorias": float(kpis[3]) if kpis[3] else 0
                 }
-            return {} # Retorna um dicionário vazio se não houver dados.
+            return {}
+    except Exception as e:
+        logger.error(f"Erro ao buscar KPIs do dashboard: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno ao processar dados do dashboard.")
     finally:
-        # O bloco 'finally' garante que a conexão com o banco SEMPRE será fechada,
-        # mesmo que ocorra um erro, evitando vazamento de recursos.
-        conn.close()
+        # O bloco 'finally' garante que a conexão SEMPRE será devolvida ao pool,
+        # mesmo que ocorra um erro. Isso é CRUCIAL para não vazar conexões.
+        if conn:
+            connection_pool.putconn(conn)
 
-# Define a rota GET para /api/dashboard/operacoes_por_status
 @router.get("/operacoes_por_status")
 def get_operacoes_por_status():
-    """
-    Retorna a contagem de operações agrupadas por status, formatada para
-    ser usada diretamente pela biblioteca de gráficos Recharts no frontend.
-    """
+    if not connection_pool:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
+        
     sql = "SELECT status, COUNT(*) as count FROM operacoes_logisticas GROUP BY status ORDER BY count DESC;"
-    conn = get_db_conn()
+    conn = None
     try:
+        conn = connection_pool.getconn()
         with conn.cursor() as cur:
             cur.execute(sql)
             data = cur.fetchall()
-            # Transforma a lista de tuplas (ex: [('ENTREGUE', 50), ('EM_TRANSITO', 20)])
-            # em uma lista de dicionários no formato que o Recharts espera (ex: [{'name': 'ENTREGUE', 'value': 50}, ...]).
             return [{"name": str(row[0]), "value": row[1]} for row in data]
     finally:
-        conn.close()
-        
+        if conn:
+            connection_pool.putconn(conn)
 
 @router.get("/valor_frete_por_uf")
 def get_valor_frete_por_uf():
-    """
-    Retorna o valor total de frete agrupado por UF de destino.
-    Limita aos 10 estados com maior valor para um gráfico mais limpo.
-    """
+    if not connection_pool:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
+        
     sql = """
         SELECT uf_destino, SUM(valor_frete) as total_frete
         FROM operacoes_logisticas
@@ -115,22 +108,22 @@ def get_valor_frete_por_uf():
         ORDER BY total_frete DESC
         LIMIT 10;
     """
-    conn = get_db_conn()
+    conn = None
     try:
+        conn = connection_pool.getconn()
         with conn.cursor() as cur:
             cur.execute(sql)
             data = cur.fetchall()
             return [{"name": row[0], "value": float(row[1])} for row in data]
     finally:
-        conn.close()
+        if conn:
+            connection_pool.putconn(conn)
 
 @router.get("/operacoes_por_dia")
 def get_operacoes_por_dia():
-    """
-    Retorna a contagem de operações criadas por dia nos últimos 30 dias.
-    Ideal para um gráfico de linha de tendência.
-    """
-    # CAST(data_emissao AS DATE) remove a parte de hora, agrupando por dia.
+    if not connection_pool:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
+        
     sql = """
         SELECT CAST(data_emissao AS DATE) as dia, COUNT(*) as count
         FROM operacoes_logisticas
@@ -138,23 +131,22 @@ def get_operacoes_por_dia():
         GROUP BY dia
         ORDER BY dia ASC;
     """
-    conn = get_db_conn()
+    conn = None
     try:
+        conn = connection_pool.getconn()
         with conn.cursor() as cur:
             cur.execute(sql)
             data = cur.fetchall()
-            # Formata a data para o padrão 'DD/MM' para exibição no gráfico
             return [{"name": row[0].strftime('%d/%m'), "value": row[1]} for row in data]
     finally:
-        conn.close()
-        
+        if conn:
+            connection_pool.putconn(conn)
 
 @router.get("/top_clientes_por_valor")
 def get_top_clientes_por_valor():
-    """
-    Retorna os 5 maiores clientes com base no valor total de mercadorias movimentadas.
-    Ideal para um gráfico de pizza.
-    """
+    if not connection_pool:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
+        
     sql = """
         SELECT
             c.nome_razao_social,
@@ -166,11 +158,13 @@ def get_top_clientes_por_valor():
         ORDER BY total_valor DESC
         LIMIT 5;
     """
-    conn = get_db_conn()
+    conn = None
     try:
+        conn = connection_pool.getconn()
         with conn.cursor() as cur:
             cur.execute(sql)
             data = cur.fetchall()
             return [{"name": row[0], "value": float(row[1])} for row in data]
     finally:
-        conn.close()
+        if conn:
+            connection_pool.putconn(conn)
