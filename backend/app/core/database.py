@@ -18,6 +18,9 @@ from .config import settings
 # Obtém um logger específico para este módulo, o que ajuda a identificar a origem das mensagens de log.
 logger = logging.getLogger(__name__)
 
+# Variável global para armazenar o schema em cache.
+_cached_schema: str | None = None
+
 def get_db_connection() -> SQLDatabase:
     """
     Cria a conexão principal do LangChain, que será usada para EXECUTAR as queries SQL
@@ -40,14 +43,15 @@ def get_db_connection() -> SQLDatabase:
         logger.error(f"Falha ao conectar com o banco de dados (LangChain): {e}")
         raise
 
-def get_compact_db_schema() -> str:
+def _generate_compact_db_schema() -> str:
     """
     Gera uma string de schema muito compacta, incluindo os valores
     possíveis para os tipos ENUM, para guiar melhor a IA.
+    Esta função se conecta ao banco e faz o trabalho pesado.
     """
     conn = None
     try:
-        logger.info("Gerando schema compacto do banco de dados.")
+        logger.info("Gerando schema compacto do banco de dados a partir do DB...")
         conn = psycopg2.connect(
             host=settings.DB_HOST,
             dbname=settings.DB_NAME,
@@ -69,17 +73,12 @@ def get_compact_db_schema() -> str:
             columns = []
             for row in cur.fetchall():
                 column_name, data_type = row
-                # --- LÓGICA ADICIONADA PARA ENUMs ---
-                # Se o tipo da coluna for um dos nossos ENUMs customizados...
                 if data_type in ['tipo_operacao_logistica', 'status_operacao']:
-                    # ...busca os valores possíveis para esse ENUM.
                     cur.execute(f"SELECT unnest(enum_range(NULL::{data_type}))::text")
                     enum_values = [f"'{val[0]}'" for val in cur.fetchall()]
-                    # E adiciona essa informação à descrição da coluna.
                     columns.append(f"{column_name} ({data_type}, valores possíveis: {', '.join(enum_values)})")
                 else:
                     columns.append(f"{column_name} ({data_type})")
-                # ------------------------------------
 
             schema_parts.append(f"Tabela: {table}\nColunas: {', '.join(columns)}")
             
@@ -92,6 +91,19 @@ def get_compact_db_schema() -> str:
     finally:
         if conn:
             conn.close()
+
+def get_compact_db_schema() -> str:
+    """
+    Função pública que retorna o schema do banco de dados, utilizando um cache
+    para evitar múltiplas chamadas ao banco.
+    """
+    global _cached_schema
+    # Se o cache estiver vazio (None), chama a função geradora.
+    if _cached_schema is None:
+        _cached_schema = _generate_compact_db_schema()
+    
+    # Retorna o schema que está em cache.
+    return _cached_schema
 
 # --- Instanciação da Conexão ---
 # Cria uma instância única da conexão do LangChain quando a aplicação é iniciada.
