@@ -5,21 +5,17 @@
   display: flex;
   margin-bottom: 20px;
   max-width: 75%;
-  /* Este é o padrão para mensagens de texto */
+  /* Padrão para mensagens de texto */
   gap: 15px;
   align-items: flex-start;
   transition: max-width 0.3s ease-in-out;
-  /* Adiciona transição suave para a mudança de tamanho */
 }
 
-/* --- REGRA CRÍTICA PARA O LAYOUT DO GRÁFICO --- */
 /* Quando o wrapper contiver um gráfico, ele poderá ocupar mais espaço na tela */
 .wrapper-has-chart {
   max-width: 90%;
   /* Aumenta a largura máxima do container pai */
 }
-
-/* ------------------------------------------- */
 
 .bot-wrapper {
   align-self: flex-start;
@@ -67,20 +63,59 @@
   border-top-right-radius: 5px;
 }
 
-/* Regra única e correta para o balão de mensagem quando ele contém um gráfico */
+/* Regra para o balão de mensagem quando ele contém um gráfico */
 .message.has-chart {
   width: 100%;
-  /* O balão ocupa 100% do seu pai (que agora está mais largo) */
   padding: 20px;
   background-color: var(--surface);
 }
 
 .chart-container {
-  min-width: 400px;
-  /* Garante que o gráfico tenha uma largura mínima decente */
   color: var(--text-primary);
-  padding-bottom: 15px;
+  min-width: 900px;
+  /* O overflow foi movido para uma div interna no ChartComponent.js */
 }
+
+/* --- ESTILOS PARA A DIV INTERNA DE ROLAGEM DENTRO DE .chart-container --- */
+/* Este seletor '[style*="overflow-x: auto"]' aplica os estilos à div que tem a rolagem */
+.chart-container>div[style*="overflow-x: auto"] {
+  padding-bottom: 15px;
+  /* Adiciona espaço para a barra de rolagem */
+  position: relative;
+}
+
+/* Efeito de sombra "fade out" na direita para indicar que há mais conteúdo */
+.chart-container>div[style*="overflow-x: auto"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50px;
+  height: 100%;
+  background: linear-gradient(to left, var(--surface), transparent);
+  pointer-events: none;
+}
+
+/* Estilização da barra de rolagem para navegadores WebKit (Chrome, Safari, Edge) */
+.chart-container>div[style*="overflow-x: auto"]::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chart-container>div[style*="overflow-x: auto"]::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: 4px;
+}
+
+.chart-container>div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: 4px;
+}
+
+.chart-container>div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb:hover {
+  background-color: #7183f2;
+}
+
+/* --- FIM DOS ESTILOS ATUALIZADOS --- */
 
 .chart-container h4 {
   margin-top: 0;
