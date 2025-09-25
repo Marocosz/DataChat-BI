@@ -114,19 +114,27 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 
 ## Updates
 
-> Versão 1:
+> [!NOTE]
+> Versão 1
+
+| Versão | Data       | Mudanças principais               |
+|--------|------------|-----------------------------------|
+| 1.0    | 25/09/2025 | MVP funcional do SUPPBOT BI       |
+
 
 ### Melhorias:
 
 ## Funcionamento
 
-> Descrição do sistema
+Nesta seção, apresentamos uma visão detalhada de como cada parte do SUPPBOT BI opera, do frontend ao backend. Aqui você encontrará uma explicação clara de como os componentes, scripts e módulos interagem entre si, como os dados fluem do usuário até o banco de dados e de volta, e como a inteligência artificial é utilizada para processar perguntas, gerar consultas SQL e exibir respostas e gráficos.  
+
+O objetivo é fornecer ao leitor uma compreensão completa do funcionamento interno do sistema, permitindo não apenas usar o SUPPBOT BI, mas também entender, manter e expandir seu código com facilidade.
 
 ### `backend/app/api/dashboard.py`
 
 > API ROUTER PARA O DASHBOARD Padrões de arquitetura aplicados:
-1. Connection Pooling: Para reutilizar conexões com o banco de dados e melhorar a performance.
-2. Cache: Para armazenar em memória os resultados de queries lentas, tornando recargas rápidas.
-3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
+> 1. Connection Pooling: Para reutilizar conexões com o banco de dados e melhorar a performance.
+> 2. Cache: Para armazenar em memória os resultados de queries lentas, tornando recargas rápidas.
+> 3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
 
 #### Endpoints
