@@ -14,8 +14,6 @@
   - [Updates](#updates)
   - [Funcionamento](#funcionamento)
     - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
-      - [Endpoints](#endpoints)
-        - [`/kpis`](#kpis)
 
 ---
 
@@ -136,9 +134,9 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > 2. Cache: Para armazenar em memória os resultados de queries lentas, tornando recargas rápidas.
 > 3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
 
-#### Endpoints
+<h4 style="font-size:24px;">Endpoints</h4>
 
-##### `/kpis`
+<h5 style="font-size:20px;">/kpis</h5>
 
 Retorna os principais **KPIs (Key Performance Indicators)** do dashboard logístico.
 
@@ -152,7 +150,6 @@ Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna métric
 **Exemplo de Request:**  
 ```http
 GET /kpis
-Host: seu-dominio.com
 ```
 
 **Resposta de Sucesso (HTTP 200):**  
@@ -181,3 +178,45 @@ Um JSON com os seguintes campos:
 **Observações:**  
 - O valor de `valor_total_mercadorias` é convertido de `Decimal` para `float` para compatibilidade com JSON.  
 - Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
+
+
+<h5 style="font-size:20px;">/operacoes_por_status</h5>
+
+Retorna a contagem de **operações logísticas agrupadas por status**.
+
+**Descrição:**  
+Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna a quantidade de operações em cada status (`ENTREGUE`, `EM_TRANSITO`, etc.). As colunas da query já são renomeadas para `name` e `value`, facilitando o uso direto pelo frontend. Para otimizar a performance, os resultados são armazenados em cache; se os dados já estiverem em cache, o log indicará `CACHE HIT` e a query não será executada novamente.
+
+**Parâmetros de entrada:**  
+- Nenhum parâmetro é necessário.  
+- O endpoint depende do cursor do banco de dados (`cur`) injetado via `Depends(get_db_cursor)` no FastAPI.
+
+**Exemplo de Request:**  
+```http
+GET /operacoes_por_status
+```
+
+**Resposta de Sucesso (HTTP 200):**  
+Um JSON com os seguintes campos:
+
+| Campo   | Tipo | Descrição                               |
+|---------|------|-----------------------------------------|
+| `name`  | str  | Status da operação (`ENTREGUE`, `EM_TRANSITO`, etc.) |
+| `value` | int  | Quantidade de operações naquele status  |
+
+**Exemplo de Response:**  
+```json
+[
+  { "name": "ENTREGUE", "value": 900 },
+  { "name": "EM_TRANSITO", "value": 300 },
+  { "name": "PENDENTE", "value": 50 }
+]
+```
+
+**Tratamento de Erros:**  
+- Retorna `HTTP 500` com a mensagem `"Erro interno ao processar operações por status."` caso ocorra algum problema ao acessar o banco ou processar os dados.
+
+**Observações:**  
+- A query já retorna os resultados ordenados pela quantidade (`value`) em ordem decrescente.  
+- Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
+
