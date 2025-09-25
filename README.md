@@ -12,10 +12,10 @@
     - [Modelos LLM:](#modelos-llm)
   - [Estrutura do Projeto](#estrutura-do-projeto)
   - [Updates](#updates)
-    - [Melhorias:](#melhorias)
   - [Funcionamento](#funcionamento)
     - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
       - [Endpoints](#endpoints)
+        - [`/kpis`](#kpis)
 
 ---
 
@@ -121,8 +121,7 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 |--------|------------|-----------------------------------|
 | 1.0    | 25/09/2025 | MVP funcional do SUPPBOT BI       |
 
-
-### Melhorias:
+---
 
 ## Funcionamento
 
@@ -138,3 +137,47 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > 3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
 
 #### Endpoints
+
+##### `/kpis`
+
+Retorna os principais **KPIs (Key Performance Indicators)** do dashboard logístico.
+
+**Descrição:**  
+Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna métricas agregadas de desempenho das operações logísticas. Para otimizar a performance, os resultados são armazenados em cache; se os dados já estiverem em cache, o log indicará `CACHE HIT` e a query não será executada novamente.
+
+**Parâmetros de entrada:**  
+- Nenhum parâmetro é necessário.  
+- O endpoint depende do cursor do banco de dados (`cur`) injetado via `Depends(get_db_cursor)` no FastAPI.
+
+**Exemplo de Request:**  
+```http
+GET /kpis
+Host: seu-dominio.com
+```
+
+**Resposta de Sucesso (HTTP 200):**  
+Um JSON com os seguintes campos:
+
+| Campo                     | Tipo     | Descrição                                           |
+|----------------------------|---------|---------------------------------------------------|
+| `total_operacoes`          | int     | Número total de operações registradas            |
+| `operacoes_entregues`      | int     | Número de operações com status `ENTREGUE`        |
+| `operacoes_em_transito`    | int     | Número de operações com status `EM_TRANSITO`     |
+| `valor_total_mercadorias`  | float   | Soma do valor das mercadorias de todas as operações |
+
+**Exemplo de Response:**  
+```json
+{
+  "total_operacoes": 1200,
+  "operacoes_entregues": 900,
+  "operacoes_em_transito": 300,
+  "valor_total_mercadorias": 157500.75
+}
+```
+
+**Tratamento de Erros:**  
+- Retorna `HTTP 500` com a mensagem `"Erro interno ao processar KPIs."` caso ocorra algum problema ao acessar o banco ou processar os dados.
+
+**Observações:**  
+- O valor de `valor_total_mercadorias` é convertido de `Decimal` para `float` para compatibilidade com JSON.  
+- Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
