@@ -1,98 +1,97 @@
 # =============================================================================
-# API ROUTER PARA O DASHBOARD COM CONNECTION POOLING
-#
-# Este arquivo implementa os endpoints da API para o dashboard, utilizando o framework
-# FastAPI. O principal objetivo é fornecer dados analíticos de forma eficiente e segura
-# a partir do banco de dados PostgreSQL, empregando a técnica de Connection Pooling.
-#
-# O Connection Pooling é uma técnica crucial para o desempenho. Em vez de criar e fechar
-# uma nova conexão para cada requisição (o que é lento e custoso), um "pool" de conexões
-# é mantido aberto. As requisições pegam uma conexão "emprestada", a usam, e a devolvem
-# ao pool, reduzindo a latência e a carga sobre o banco de dados, e prevenindo o "vazamento"
-# de conexões.
-# =============================================================================
-
-# =============================================================================
-# API ROUTER PARA O DASHBOARD - VERSÃO FINAL E ROBUSTA
-# Padrões aplicados: Connection Pooling, Cache e Dependency Injection.
-# =============================================================================
-# =============================================================================
-# API ROUTER PARA O DASHBOARD - VERSÃO FINAL COM DEBUG DE KPIs
-# =============================================================================
-
-# =============================================================================
 # API ROUTER PARA O DASHBOARD - VERSÃO FINAL E DEFINITIVA
-# Padrões aplicados: Connection Pooling, Cache e Dependency Injection com RealDictCursor.
+#
+# Este arquivo contém os endpoints da API para o dashboard.
+# Padrões de arquitetura aplicados:
+# 1. Connection Pooling: Para reutilizar conexões com o banco de dados e melhorar a performance.
+# 2. Cache: Para armazenar em memória os resultados de queries lentas, tornando recargas rápidas.
+# 3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
 # =============================================================================
 
-# =============================================================================
-# API ROUTER PARA O DASHBOARD - VERSÃO FINAL E UNIFICADA
-# Padrões aplicados: Connection Pooling, Cache, Dependency Injection com RealDictCursor.
-# =============================================================================
-
-# =============================================================================
-# API ROUTER PARA O DASHBOARD - VERSÃO FINAL E DEFINITIVA
-# Padrões: Connection Pooling, Cache, Dependency Injection com RealDictCursor.
-# =============================================================================
-
+# --- Bloco de Importações ---
 import logging
 import psycopg2
-import psycopg2.extras # Para retornar dicionários em vez de tuplas
-from psycopg2.pool import SimpleConnectionPool
-from fastapi import APIRouter, HTTPException, status, Depends
-from app.core.config import settings
-from cachetools import cached, TTLCache
+import psycopg2.extras  # Importa funcionalidades extras, como o RealDictCursor
+from psycopg2.pool import SimpleConnectionPool # A classe para o pool de conexões
+from fastapi import APIRouter, HTTPException, status, Depends # Componentes do FastAPI
+from app.core.config import settings # Nossas configurações (URL do banco, etc.)
+from cachetools import cached, TTLCache # A biblioteca para o cache em memória
 
+# --- Configuração Inicial ---
+# Configura um logger para este arquivo, para podermos ver mensagens no terminal.
 logger = logging.getLogger(__name__)
+# Cria um "roteador", um mini-aplicativo para agrupar todos os endpoints do dashboard.
 router = APIRouter()
 
 # --- 1. POOL DE CONEXÕES ---
-# Criado uma única vez para ser reutilizado por toda a aplicação.
+# O pool é criado UMA ÚNICA VEZ quando a aplicação inicia.
 try:
     connection_pool = SimpleConnectionPool(
-        minconn=1, maxconn=10,
-        host=settings.DB_HOST, dbname=settings.DB_NAME,
-        user=settings.DB_USER, password=settings.DB_PASS, port=settings.DB_PORT
+        minconn=1,       # Manter pelo menos 1 conexão sempre aberta e pronta para uso.
+        maxconn=10,      # Permitir no máximo 10 conexões simultâneas para não sobrecarregar o banco.
+        host=settings.DB_HOST,
+        dbname=settings.DB_NAME,
+        user=settings.DB_USER,
+        password=settings.DB_PASS,
+        port=settings.DB_PORT
     )
     logger.info("Pool de conexões do dashboard criado com sucesso.")
 except Exception as e:
+    # Se a conexão com o banco falhar na inicialização, logamos o erro.
     logger.error(f"Falha ao criar o pool de conexões do dashboard: {e}", exc_info=True)
     connection_pool = None
 
 # --- 2. CACHE ---
-# Cache em memória com 5 minutos de validade para os resultados.
-cache = TTLCache(maxsize=10, ttl=300)
+# O cache também é criado UMA ÚNICA VEZ.
+# TTLCache: "Time To Live" Cache, onde cada item tem um tempo de vida.
+cache = TTLCache(
+    maxsize=10,  # O cache armazenará no máximo 10 resultados diferentes.
+    ttl=300      # ttl (Time To Live) = 300 segundos (5 minutos). Após 5 min, o dado é considerado "velho" e será buscado novamente no banco.
+)
 
-# --- 3. DEPENDÊNCIA DO FASTAPI ---
-# Esta função gerencia o ciclo de vida da conexão de forma segura e elegante.
-# Ela "empresta" uma conexão do pool, a entrega para o endpoint,
-# e garante que ela seja devolvida ao pool no final, mesmo se ocorrer um erro.
+# --- 3. DEPENDÊNCIA DO FASTAPI PARA GERENCIAR CONEXÕES ---
+# Esta função é a peça central que conecta o Pool com os Endpoints.
 def get_db_cursor():
+    # Verifica se o pool foi criado com sucesso na inicialização.
     if not connection_pool:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Serviço de banco de dados indisponível.")
-    conn = None
+    
+    conn = None # Inicializa a variável de conexão
     try:
+        # Pega uma conexão "emprestada" do pool. Se não houver nenhuma disponível, espera por uma.
         conn = connection_pool.getconn()
-        # Usamos um cursor que retorna dicionários, o que deixa o código mais limpo.
+        
+        # O `yield` é a mágica da injeção de dependência: ele "entrega" o cursor para a função do endpoint
+        # e pausa a execução desta função aqui.
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             yield cursor
+            
     finally:
+        # Quando o endpoint termina (com sucesso ou erro), a execução desta função continua após o `yield`.
+        # O bloco `finally` GARANTE que a conexão SEMPRE será devolvida ao pool, evitando vazamentos.
         if conn:
             connection_pool.putconn(conn)
 
 # --- 4. ENDPOINTS ---
-# Cada endpoint agora é simples: recebe o cursor, executa a query e retorna o resultado.
+# Cada endpoint agora usa a estrutura:
+# @cached(cache): Aplica o cache. Se o resultado estiver na memória, retorna-o imediatamente sem executar a função.
+# Depends(get_db_cursor): Recebe um cursor pronto para uso da função de dependência.
 
 @router.get("/kpis")
 @cached(cache)
 def get_dashboard_kpis(cur = Depends(get_db_cursor)):
+    # Esta mensagem só aparecerá no log se o resultado não estiver no cache.
     logger.info("Buscando KPIs do banco (CACHE MISS)...")
     sql = "SELECT COUNT(*) as total_operacoes, SUM(CASE WHEN status = 'ENTREGUE' THEN 1 ELSE 0 END) as operacoes_entregues, SUM(CASE WHEN status = 'EM_TRANSITO' THEN 1 ELSE 0 END) as operacoes_em_transito, SUM(valor_mercadoria) as valor_total_mercadorias FROM operacoes_logisticas;"
     try:
         cur.execute(sql)
-        kpis = cur.fetchone()
+        kpis = cur.fetchone() # Pega a única linha de resultado. `kpis` será um dicionário.
+        
+        # O banco retorna o tipo 'Decimal' para somas, que não é compatível com JSON. Convertemos para float.
         if kpis and kpis.get('valor_total_mercadorias'):
             kpis['valor_total_mercadorias'] = float(kpis['valor_total_mercadorias'])
+            
+        # Retorna o dicionário de kpis, ou um dicionário vazio se a tabela estiver vazia.
         return kpis or {}
     except Exception as e:
         logger.error(f"Erro ao buscar KPIs do dashboard: {e}", exc_info=True)
@@ -102,9 +101,11 @@ def get_dashboard_kpis(cur = Depends(get_db_cursor)):
 @cached(cache)
 def get_operacoes_por_status(cur = Depends(get_db_cursor)):
     logger.info("Buscando operações por status do banco (CACHE MISS)...")
+    # A query já renomeia as colunas para "name" e "value", simplificando o trabalho do frontend.
     sql = "SELECT status as name, COUNT(*) as value FROM operacoes_logisticas GROUP BY status ORDER BY value DESC;"
     try:
         cur.execute(sql)
+        # fetchall() busca todas as linhas do resultado e já retorna uma lista de dicionários.
         return cur.fetchall()
     except Exception as e:
         logger.error(f"Erro ao buscar operações por status: {e}", exc_info=True)
@@ -118,6 +119,7 @@ def get_valor_frete_por_uf(cur = Depends(get_db_cursor)):
     try:
         cur.execute(sql)
         data = cur.fetchall()
+        # Itera sobre os resultados para converter o tipo 'Decimal' para 'float'.
         for row in data:
             if row.get('value'): row['value'] = float(row['value'])
         return data
@@ -133,6 +135,7 @@ def get_operacoes_por_dia(cur = Depends(get_db_cursor)):
     try:
         cur.execute(sql)
         data = cur.fetchall()
+        # Itera sobre os resultados para formatar a data (que vem como objeto `datetime.date`) para o formato 'dd/mm'.
         for row in data:
             if row.get('name'): row['name'] = row['name'].strftime('%d/%m')
         return data
@@ -148,6 +151,7 @@ def get_top_clientes_por_valor(cur = Depends(get_db_cursor)):
     try:
         cur.execute(sql)
         data = cur.fetchall()
+        # Converte o tipo 'Decimal' para 'float'.
         for row in data:
             if row.get('value'): row['value'] = float(row['value'])
         return data
