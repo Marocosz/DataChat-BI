@@ -15,6 +15,12 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
+## INÍCIO DA ATUALIZAÇÃO ##
+# Adiciona um logger específico para este arquivo, o que é uma boa prática
+# para identificar a origem das mensagens de log.
+logger = logging.getLogger(__name__)
+## FIM DA ATUALIZAÇÃO ##
+
 # Instanciação da Aplicação FastAPI
 app = FastAPI(
     title="SuppBot RAG API",
@@ -51,6 +57,12 @@ async def chat_endpoint(request: ChatRequest):
     """
     start_time = time.monotonic()
     
+    # Bloco de log para exibir a pergunta do usuário no terminal do backend.
+    # Os separadores ajudam a destacar a nova pergunta em meio aos outros logs.
+    logger.info("=================================================")
+    logger.info(f"--- Nova Pergunta Recebida: '{request.question}'")
+    logger.info("=================================================")
+
     # Gera um novo ID de sessão se for a primeira mensagem da conversa
     session_id = request.session_id or str(uuid.uuid4())
     
@@ -73,6 +85,7 @@ async def chat_endpoint(request: ChatRequest):
         return response_dict
         
     except Exception as e:
+        # Usamos o logger raiz aqui para erros graves, o que está correto.
         logging.error(f"Erro no processamento da cadeia RAG: {e}", exc_info=True)
         return {"type": "text", "content": "Desculpe, ocorreu um erro grave ao processar sua solicitação."}
 

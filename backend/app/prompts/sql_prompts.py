@@ -41,6 +41,10 @@ FEW_SHOT_EXAMPLES = [
     {
         "input": "Qual o cliente com maior valor total de mercadorias?",
         "query": "SELECT c.nome_razao_social, SUM(o.valor_mercadoria) as total_valor FROM clientes c JOIN operacoes_logisticas o ON c.id = o.cliente_id GROUP BY c.nome_razao_social ORDER BY total_valor DESC LIMIT 1;"
+    },
+    {
+        "input": "Quantos clientes possuem 100 ou mais operações com status EM_TRANSITO para o estado de SP?",
+        "query": """WITH clientes_filtrados AS (SELECT o.cliente_id FROM operacoes_logisticas o WHERE o.uf_destino = 'SP' AND o.status = 'EM_TRANSITO' GROUP BY o.cliente_id HAVING COUNT(o.id) >= 100) SELECT COUNT(*) AS total_clientes FROM clientes_filtrados;"""
     }
 ]
 
