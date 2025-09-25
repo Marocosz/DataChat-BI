@@ -1,19 +1,45 @@
-# ================================================================================================================
-# ARQUIVO DE PROMPTS - O CÉREBRO CONVERSACIONAL DA APLICAÇÃO "prompt engineering".
+# =================================================================================================
+# =================================================================================================
 #
-# Este arquivo centraliza todas as instruções (prompts) que guiam o
-# comportamento dos modelos de linguagem (LLMs). Cada variável aqui define uma
-# tarefa específica, como gerar SQL, classificar a intenção do usuário ou
-# formatar a resposta final.
-# ================================================================================================================
+#                 ARQUIVO DE PROMPTS - O CÉREBRO CONVERSACIONAL DA APLICAÇÃO
+#
+# Visão Geral da Arquitetura de Prompts:
+#
+# Este arquivo define o comportamento da inteligência artificial através de uma série de "prompts"
+# especializados, que funcionam como uma linha de montagem para processar a pergunta do usuário:
+#
+# 1. ROUTER_PROMPT (O Porteiro):
+#    - Classifica a pergunta do usuário para decidir se é uma conversa simples ou uma
+#      consulta ao banco de dados, direcionando para o especialista correto.
+#
+# 2. REPHRASER_PROMPT (O Especialista em Contexto):
+#    - Se for uma consulta, este prompt reescreve perguntas ambíguas ou de acompanhamento
+#      (ex: "e para ele?") em uma pergunta completa e autônoma, usando o histórico do chat.
+#
+# 3. SQL_PROMPT (O Engenheiro de Banco de Dados):
+#    - Recebe a pergunta já clara do Rephraser e a traduz em uma query SQL precisa,
+#      usando exemplos de "Few-Shot Learning" para garantir a sintaxe correta.
+#
+# 4. FINAL_ANSWER_PROMPT (O Analista de Dados e Comunicador):
+#    - Pega o resultado bruto da query SQL e o transforma em uma resposta amigável para o
+#      usuário, decidindo entre um texto simples ou um gráfico e formatando a saída em JSON.
+#
+# Cada prompt é um especialista em sua própria tarefa, tornando o sistema modular e robusto.
+#
+# =================================================================================================
+# =================================================================================================
 
+# Importa as classes necessárias do LangChain para construir os templates de prompt.
+# PromptTemplate é usado para prompts simples com variáveis.
+# FewShotPromptTemplate é para prompts mais complexos que aprendem com exemplos.
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 
-# --- Bloco 1: Geração de SQL ---
-# ATUALIZAÇÃO: Este bloco foi simplificado para funcionar com a nova arquitetura do "Rephraser".
-# Ele não lida mais com o histórico da conversa, recebendo sempre uma pergunta completa.
+# --- Bloco 1: O Engenheiro de Banco de Dados (SQL_PROMPT) ---
 
-# "Few-Shot": A lista de exemplos permanece a mesma, pois continua sendo valiosa.
+# Define uma lista de exemplos de alta qualidade (técnica de "Few-Shot Learning").
+# Estes exemplos ensinam o LLM a traduzir perguntas em linguagem natural para o SQL
+# específico do nosso banco de dados, cobrindo casos como JOINs, agregações e subqueries.
+# Esta lista é o principal fator para a precisão da geração de SQL.
 FEW_SHOT_EXAMPLES = [
     {
         "input": "Quantas operações foram canceladas?",
@@ -45,18 +71,19 @@ FEW_SHOT_EXAMPLES = [
     }
 ]
 
-# Template auxiliar para formatar exemplos (sem alteração)
+# Cria um template para formatar cada um dos exemplos acima em um texto consistente.
 EXAMPLE_PROMPT_TEMPLATE = PromptTemplate.from_template(
     "User question: {input}\nSQL query: {query}"
 )
 
-# ATUALIZAÇÃO: O prompt principal para geração de SQL agora é muito mais simples.
+# Define as instruções principais para o LLM Gerador de SQL.
+# Com a arquitetura do Rephraser, sua tarefa é muito mais simples e direta.
 SQL_GENERATION_SYSTEM_PROMPT = """
 Você é um assistente especialista em PostgreSQL. Sua única tarefa é gerar uma query SQL com base na pergunta do usuário e no esquema do banco de dados.
 
 - A pergunta que você receberá já estará completa, clara e autônoma. Você NÃO PRECISA se preocupar com o histórico da conversa.
 - Sua tarefa é simplesmente traduzir a pergunta para uma query SQL válida.
-- A query deve ser sintaticamente correta для PostgreSQL.
+- A query deve ser sintaticamente correta para PostgreSQL.
 - Siga as regras gerais: não inclua explicações ou ```sql``` na saída, apenas o código da query.
 
 **Sua Resposta Final DEVE SER APENAS O CÓDIGO SQL.**
@@ -66,8 +93,11 @@ Aqui está o esquema do banco de dados: {schema}
 Considere os seguintes exemplos de perguntas e queries bem-sucedidas:
 """
 
-# ATUALIZAÇÃO: O construtor do prompt agora aponta para o novo System Prompt
-# e, o mais importante, declara que só espera as variáveis `question` e `schema`.
+# Monta o prompt final para a geração de SQL.
+# `prefix`: Contém as instruções principais e o esquema do banco.
+# `examples`: A lista de exemplos que o LLM usará para aprender.
+# `suffix`: Onde a pergunta final do usuário é inserida.
+# `input_variables`: Declara quais variáveis este prompt espera receber.
 SQL_PROMPT = FewShotPromptTemplate(
     examples=FEW_SHOT_EXAMPLES,
     example_prompt=EXAMPLE_PROMPT_TEMPLATE,
@@ -77,9 +107,24 @@ SQL_PROMPT = FewShotPromptTemplate(
     example_separator="\n\n"
 )
 
+"""
+--- Exemplo de Uso e Saída (SQL_PROMPT) ---
 
-# --- Bloco 2: Geração da Resposta Final (Analista de Dados) ---
-# Nenhuma alteração necessária neste bloco.
+INPUT (O que a cadeia fornece a este prompt):
+{
+  "question": "Qual o número total de operações para o cliente 'Porto'?",
+  "schema": "CREATE TABLE clientes (id INTEGER, nome_razao_social VARCHAR) CREATE TABLE operacoes_logisticas (id INTEGER, cliente_id INTEGER)"
+}
+
+SAÍDA GERADA PELO LLM:
+SELECT COUNT(o.id) FROM operacoes_logisticas o JOIN clientes c ON o.cliente_id = c.id WHERE c.nome_razao_social = 'Porto';
+"""
+
+
+# --- Bloco 2: O Analista de Dados e Comunicador (FINAL_ANSWER_PROMPT) ---
+
+# Define as instruções para o LLM que formata a resposta final para o usuário.
+# Ele recebe o resultado bruto do banco e a pergunta original (já reescrita).
 FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é atuar como analista de dados e assistente de comunicação.
@@ -121,9 +166,49 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
 )
 
+"""
+--- Exemplo de Uso e Saída (FINAL_ANSWER_PROMPT) ---
 
-# --- Bloco 3: Roteador de Intenção ---
-# Nenhuma alteração necessária neste bloco.
+INPUT (Exemplo 1 - Texto):
+{
+  "question": "Quantas operações foram canceladas?",
+  "result": "[{'count': 123}]",
+  "format_instructions": "The output must be a valid JSON. See above."
+}
+
+SAÍDA GERADA PELO LLM (Exemplo 1):
+{
+    "type": "text",
+    "content": "Foram canceladas um total de 123 operações."
+}
+
+---
+
+INPUT (Exemplo 2 - Gráfico):
+{
+  "question": "Qual o valor total de frete para cada estado de destino?",
+  "result": "[('SP', 50000.00), ('MG', 30000.00), ('RJ', 25000.00)]",
+  "format_instructions": "The output must be a valid JSON. See above."
+}
+
+SAÍDA GERADA PELO LLM (Exemplo 2):
+{
+    "type": "chart",
+    "chart_type": "bar",
+    "title": "Valor Total de Frete por Estado de Destino",
+    "data": [{"uf_destino": "SP", "valor_total_frete": 50000.00}, {"uf_destino": "MG", "valor_total_frete": 30000.00}, {"uf_destino": "RJ", "valor_total_frete": 25000.00}],
+    "x_axis": "uf_destino",
+    "y_axis": ["valor_total_frete"],
+    "y_axis_label": "Valor Total Frete (R$)"
+}
+"""
+
+
+# --- Bloco 3: O Porteiro (ROUTER_PROMPT) ---
+
+# Define as instruções para o LLM classificador de intenção.
+# Sua única função é decidir se a pergunta do usuário é uma conversa casual
+# ou se ela precisa ser enviada para a complexa cadeia de consulta ao banco de dados.
 ROUTER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é classificar o texto do usuário em uma das duas categorias. Responda APENAS com o nome da categoria.
@@ -144,9 +229,37 @@ ROUTER_PROMPT = PromptTemplate.from_template(
     """
 )
 
+"""
+--- Exemplo de Uso e Saída (ROUTER_PROMPT) ---
 
-# --- Bloco 4: Reescrever a Pergunta com Contexto (REPHRASER) ---
-# Este é o novo prompt que você adicionou, está perfeito.
+INPUT (Exemplo 1):
+{
+  "question": "Olá, como você está?",
+  "chat_history": []
+}
+
+SAÍDA GERADA PELO LLM (Exemplo 1):
+saudacao_ou_conversa_simples
+
+---
+
+INPUT (Exemplo 2):
+{
+  "question": "e o total de frete deles?",
+  "chat_history": ["user: Liste os 5 maiores clientes.", "assistant: Os 5 maiores clientes são..."]
+}
+
+SAÍDA GERADA PELO LLM (Exemplo 2):
+consulta_ao_banco_de_dados
+"""
+
+
+# --- Bloco 4: O Especialista em Contexto (REPHRASER_PROMPT) ---
+
+# Define as instruções para o LLM que reescreve a pergunta do usuário.
+# Esta é a primeira etapa da cadeia de consulta ao banco. Ele pega uma pergunta
+# potencialmente ambígua e o histórico do chat e a transforma em uma pergunta
+# completa e autônoma, pronta para ser enviada ao Gerador de SQL.
 REPHRASER_PROMPT = PromptTemplate.from_template(
     """
     Sua única tarefa é reescrever a pergunta do usuário para que ela seja autônoma, usando o histórico da conversa como contexto.
@@ -163,3 +276,27 @@ REPHRASER_PROMPT = PromptTemplate.from_template(
     Pergunta Reescrita:
     """
 )
+
+"""
+--- Exemplo de Uso e Saída (REPHRASER_PROMPT) ---
+
+INPUT (Exemplo 1 - Pergunta já completa):
+{
+  "question": "Qual o valor total de frete para o estado de SP?",
+  "chat_history": ["user: Olá", "assistant: Olá, como posso ajudar?"]
+}
+
+SAÍDA GERADA PELO LLM (Exemplo 1):
+Qual o valor total de frete para o estado de SP?
+
+---
+
+INPUT (Exemplo 2 - Pergunta de acompanhamento):
+{
+  "question": "e quantas operações ele teve?",
+  "chat_history": ["user: Qual o cliente com maior valor de mercadorias?", "assistant: O cliente com maior valor é 'Porto'."]
+}
+
+SAÍDA GERADA PELO LLM (Exemplo 2):
+Qual o número total de operações que o cliente 'Porto' teve?
+"""
