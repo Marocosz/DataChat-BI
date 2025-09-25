@@ -10,13 +10,10 @@
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 
 # --- Bloco 1: Geração de SQL ---
-# Este bloco contém todos os componentes para a tarefa de transformar a pergunta
-# do usuário (em português) em uma query SQL válida para o PostgreSQL.
+# ATUALIZAÇÃO: Este bloco foi simplificado para funcionar com a nova arquitetura do "Rephraser".
+# Ele não lida mais com o histórico da conversa, recebendo sempre uma pergunta completa.
 
-# "Few-Shot"
-# Esta lista é a parte mais CRÍTICA para a precisão do nosso sistema.
-# Ela funciona como um "gabarito" que ensina o LLM, através de exemplos,
-# como traduzir perguntas para o esquema do banco de dados específico.
+# "Few-Shot": A lista de exemplos permanece a mesma, pois continua sendo valiosa.
 FEW_SHOT_EXAMPLES = [
     {
         "input": "Quantas operações foram canceladas?",
@@ -48,69 +45,41 @@ FEW_SHOT_EXAMPLES = [
     }
 ]
 
-# Template auxiliar para formatar exemplos
+# Template auxiliar para formatar exemplos (sem alteração)
 EXAMPLE_PROMPT_TEMPLATE = PromptTemplate.from_template(
     "User question: {input}\nSQL query: {query}"
 )
 
-# Prompt principal para geração de SQL
+# ATUALIZAÇÃO: O prompt principal para geração de SQL agora é muito mais simples.
 SQL_GENERATION_SYSTEM_PROMPT = """
-Você é um assistente especialista em PostgreSQL. Sua principal tarefa é gerar uma única query SQL com base na pergunta do usuário e no contexto fornecido.
+Você é um assistente especialista em PostgreSQL. Sua única tarefa é gerar uma query SQL com base na pergunta do usuário e no esquema do banco de dados.
 
-Pense passo a passo antes de gerar a query:
-
-**Passo 1: Analise a Pergunta Atual do Usuário.**
-- Se a pergunta é completa e não depende do histórico (ex: "Qual o valor total de frete?"), sua tarefa é simplesmente traduzir essa pergunta para SQL. Pule para o Passo 3.
-- Se a pergunta é um acompanhamento que usa termos como 'ele', 'dela', 'disso', ou é uma frase incompleta (ex: "e o total de operações?"), ela depende do contexto. Vá para o Passo 2.
-
-**Passo 2: Analise o Contexto da Conversa.**
-- Olhe a "Query SQL da Última Pergunta". Ela é a fonte da verdade para o contexto.
-- A query anterior identificou uma entidade principal (ex: o cliente 'Porto', encontrado com a lógica `ORDER BY SUM(...)`).
-- Sua nova query DEVE filtrar os resultados usando a lógica EXATA da query anterior dentro de uma cláusula `WHERE` com uma subquery.
-
-**Passo 3: Construa a Query Final.**
-- Com base na sua análise, construa a query SQL.
-- A query deve ser sintaticamente correta para PostgreSQL.
+- A pergunta que você receberá já estará completa, clara e autônoma. Você NÃO PRECISA se preocupar com o histórico da conversa.
+- Sua tarefa é simplesmente traduzir a pergunta para uma query SQL válida.
+- A query deve ser sintaticamente correta для PostgreSQL.
 - Siga as regras gerais: não inclua explicações ou ```sql``` na saída, apenas o código da query.
 
 **Sua Resposta Final DEVE SER APENAS O CÓDIGO SQL.**
 ---
-Histórico da Conversa:
-{chat_history}
----
-Query SQL da Última Pergunta:
-```sql
-{previous_sql}
-
 Aqui está o esquema do banco de dados: {schema}
 
 Considere os seguintes exemplos de perguntas e queries bem-sucedidas:
 """
 
-# Construtor do prompt final de SQL
+# ATUALIZAÇÃO: O construtor do prompt agora aponta para o novo System Prompt
+# e, o mais importante, declara que só espera as variáveis `question` e `schema`.
 SQL_PROMPT = FewShotPromptTemplate(
     examples=FEW_SHOT_EXAMPLES,
     example_prompt=EXAMPLE_PROMPT_TEMPLATE,
     prefix=SQL_GENERATION_SYSTEM_PROMPT,
     suffix="User question: {question}\nSQL query:",
-    input_variables=["question", "schema", "chat_history", "previous_sql"],
+    input_variables=["question", "schema"],
     example_separator="\n\n"
 )
 
-# --- Exemplo de Saída do Bloco 1 ---
-"""
-INPUT:
-question = "Quantas operações foram canceladas no último mês?"
-schema = "CREATE TABLE operacoes_logisticas (id SERIAL, status VARCHAR, data_emissao DATE);"
-chat_history = "Histórico da conversa: user: Qual o total de operações? assistant: O total de operações é 1500."
-previous_sql = "SELECT COUNT(*) FROM operacoes_logisticas;"
-
-SAÍDA GERADA PELO PROMPT:
-SELECT COUNT(*) FROM operacoes_logisticas WHERE status = 'CANCELADO' AND data_emissao >= '2023-08-01' AND data_emissao <= '2023-08-31';
-"""
-
 
 # --- Bloco 2: Geração da Resposta Final (Analista de Dados) ---
+# Nenhuma alteração necessária neste bloco.
 FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é atuar como analista de dados e assistente de comunicação.
@@ -152,40 +121,9 @@ FINAL_ANSWER_PROMPT = PromptTemplate.from_template(
     """
 )
 
-# --- Exemplo de Saída do Bloco 2 ---
-"""
-INPUT:
-question = "Quantas operações foram canceladas?"
-result = "[('count', 123)]"
-format_instructions = "The output must be a valid JSON. See above."
-
-SAÍDA GERADA PELO PROMPT:
-{
-    "type": "text",
-    "content": "Houve 123 operações canceladas."
-}
-"""
-
-"""
-INPUT:
-question = "Qual o valor total de frete para cada estado de destino?"
-result = "[('SP', 50000.00), ('MG', 30000.00), ('RJ', 25000.00)]"
-format_instructions = "The output must be a valid JSON. See above."
-
-SAÍDA GERADA PELO PROMPT:
-{
-    "type": "chart",
-    "chart_type": "bar",
-    "title": "Valor Total de Frete por Estado de Destino",
-    "data": [{"uf_destino": "SP", "valor_total_frete": 50000.00}, {"uf_destino": "MG", "valor_total_frete": 30000.00}, {"uf_destino": "RJ", "valor_total_frete": 25000.00}],
-    "x_axis": "uf_destino",
-    "y_axis": ["valor_total_frete"],
-    "y_axis_label": "Valor Total Frete (R$)"
-}
-"""
-
 
 # --- Bloco 3: Roteador de Intenção ---
+# Nenhuma alteração necessária neste bloco.
 ROUTER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é classificar o texto do usuário em uma das duas categorias. Responda APENAS com o nome da categoria.
@@ -206,21 +144,22 @@ ROUTER_PROMPT = PromptTemplate.from_template(
     """
 )
 
-# --- Exemplo de Saída do Bloco 3 ---
-"""
-INPUT:
-question = "Olá, como você está?"
-chat_history = ""
 
-SAÍDA GERADA PELO PROMPT:
-saudacao_ou_conversa_simples
-"""
+# --- Bloco 4: Reescrever a Pergunta com Contexto (REPHRASER) ---
+# Este é o novo prompt que você adicionou, está perfeito.
+REPHRASER_PROMPT = PromptTemplate.from_template(
+    """
+    Sua única tarefa é reescrever a pergunta do usuário para que ela seja autônoma, usando o histórico da conversa como contexto.
+    - Se a pergunta do usuário já for completa e não precisar de contexto, apenas a retorne como está.
+    - Se a pergunta for um acompanhamento (usando 'ele', 'disso', 'e para lá?'), use as mensagens anteriores para completá-la.
+    - Seja conciso e direto na pergunta reescrita.
 
-"""
-INPUT:
-question = "Quantas operações foram concluídas?"
-chat_history = "Histórico: N/A"
+    ---
+    Histórico da Conversa:
+    {chat_history}
+    ---
 
-SAÍDA GERADA PELO PROMPT:
-consulta_ao_banco_de_dados
-"""
+    Pergunta do Usuário: {question}
+    Pergunta Reescrita:
+    """
+)

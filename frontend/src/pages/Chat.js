@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+// =============================================================================
+// ## INÍCIO DA ATUALIZAÇÃO ##
+// =============================================================================
+// 1. Importar a função para gerar UUIDs
+import { v4 as uuidv4 } from 'uuid'; 
+// =============================================================================
+// ## FIM DA ATUALIZAÇÃO ##
+// =============================================================================
 import ChatMessage from '../components/ChatMessage';
 import { FiSend } from 'react-icons/fi';
 import './Chat.css';
@@ -16,8 +24,29 @@ function Chat() {
   // State para mostrar o indicador de "carregando" enquanto o bot responde
   const [isLoading, setIsLoading] = useState(false);
   
+  // =============================================================================
+  // ## INÍCIO DA ATUALIZAÇÃO ##
+  // =============================================================================
+  // 2. Adicionar um state para armazenar o ID da sessão de chat
+  const [sessionId, setSessionId] = useState(null);
+  // =============================================================================
+  // ## FIM DA ATUALIZAÇÃO ##
+  // =============================================================================
+
   // Ref para a div da janela de chat, para controlar o scroll
   const chatWindowRef = useRef(null);
+  
+  // =============================================================================
+  // ## INÍCIO DA ATUALIZAÇÃO ##
+  // =============================================================================
+  // 3. Adicionar um useEffect para gerar o ID da sessão UMA VEZ quando o componente é montado
+  useEffect(() => {
+    // Gera um novo ID de sessão único e o armazena no state
+    setSessionId(uuidv4());
+  }, []); // O array de dependências vazio `[]` garante que isso rode apenas uma vez
+  // =============================================================================
+  // ## FIM DA ATUALIZAÇÃO ##
+  // =============================================================================
 
   // Efeito para rolar a janela de chat para baixo sempre que uma nova mensagem é adicionada
   useEffect(() => {
@@ -28,8 +57,9 @@ function Chat() {
 
   // Função para lidar com o envio do formulário
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Previne o comportamento padrão de recarregar a página
-    if (!input.trim() || isLoading) return; // Não envia se o input estiver vazio ou se já estiver carregando
+    e.preventDefault();
+    // 4. Adiciona uma verificação para garantir que temos um sessionId antes de enviar
+    if (!input.trim() || isLoading || !sessionId) return; 
 
     const userMessage = { sender: 'user', content: { type: 'text', content: input } };
     setMessages((prev) => [...prev, userMessage]);
@@ -37,7 +67,11 @@ function Chat() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/chat', { question: input });
+      // 5. Envia o `question` E o `session_id` para o backend
+      const response = await axios.post('http://localhost:8000/chat', { 
+        question: input,
+        session_id: sessionId // <--- A MUDANÇA CRÍTICA ESTÁ AQUI
+      });
       const botMessage = { sender: 'bot', content: response.data };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -45,7 +79,7 @@ function Chat() {
       const errorMessage = { sender: 'bot', content: { type: 'text', content: 'Desculpe, não consegui me conectar ao servidor.' } };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false); // Para de carregar, independentemente do resultado
+      setIsLoading(false);
     }
   };
 
@@ -59,9 +93,9 @@ function Chat() {
         {/* Mostra o indicador de "digitando" quando isLoading é true */}
         {isLoading && (
           <div className="message-wrapper bot-wrapper">
-             <div className="message bot-message">
-               <div className="loading-dots"><div></div><div></div><div></div></div>
-             </div>
+              <div className="message bot-message">
+                <div className="loading-dots"><div></div><div></div><div></div></div>
+              </div>
           </div>
         )}
       </div>

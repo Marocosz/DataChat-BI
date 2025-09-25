@@ -9,26 +9,21 @@
 # LangChain para orquestrar uma série de passos lógicos, incluindo:
 #
 # 1. Gerenciamento de Estado Avançado: Um dicionário (`store`) armazena o histórico de mensagens e
-#    a última consulta SQL executada para cada sessão de usuário. Isso permite que o sistema
-#    mantenha o contexto e referencie consultas anteriores, o que é crucial para perguntas de seguimento.
+#    a última consulta SQL executada para cada sessão de usuário.
 #
 # 2. Roteamento Inteligente: A cadeia começa com um "roteador" (`router_chain`) que analisa a intenção
-#    do usuário (se a pergunta é uma saudação, uma conversa simples, ou se requer uma consulta ao banco de dados).
+#    do usuário.
 #
-# 3. Geração e Execução de SQL: Se a intenção for uma consulta ao banco de dados, uma sub-cadeia
-#    especializada (`sql_chain`) é ativada. Ela gera uma query SQL com base na pergunta do usuário e
-#    no esquema do banco de dados, executa essa query e formata o resultado.
+# 3. Reescrita de Pergunta (Rephraser): Antes de gerar o SQL, um passo intermediário reescreve perguntas
+#    ambíguas (ex: "e para ele?") em perguntas completas e autônomas, usando o histórico da conversa.
 #
-# 4. Resposta Final: O resultado da consulta SQL é então usado como contexto para um segundo modelo de
-#    linguagem grande (LLM) que gera uma resposta final em linguagem natural para o usuário.
+# 4. Geração e Execução de SQL: Uma sub-cadeia especializada (`sql_chain`) gera uma query SQL com base
+#    na pergunta reescrita e no esquema do banco, executa essa query e formata o resultado.
 #
-# 5. Memória de Conversa: A cadeia principal é envolvida por `RunnableWithMessageHistory`, que gerencia
-#    o histórico de mensagens, permitindo que a IA mantenha o contexto da conversa.
+# 5. Resposta Final: O resultado da consulta SQL é usado para gerar uma resposta final em linguagem natural.
 #
-# A lógica de programação foi estruturada para ser modular e extensível, com funções dedicadas para cada
-# etapa, como a execução segura de queries SQL (`execute_sql_query`) e a formatação da saída final
-# (`format_final_output`). O uso de `RunnableBranch` permite a tomada de decisões dinâmicas, direcionando
-# a conversa para a cadeia apropriada.
+# 6. Memória de Conversa: A cadeia principal é envolvida por `RunnableWithMessageHistory`, que gerencia
+#    automaticamente o histórico de mensagens.
 #
 # ================================================================================================================
 # ================================================================================================================
@@ -41,7 +36,9 @@ from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableBranch, RunnableLambda
 from app.core.llm import get_llm, get_answer_llm
 from app.core.database import db_instance, get_compact_db_schema
-from app.prompts.sql_prompts import SQL_PROMPT, FINAL_ANSWER_PROMPT, ROUTER_PROMPT
+### NOVA LÓGICA: REPHRASER ###
+# Importa o novo REPHRASER_PROMPT junto com os outros.
+from app.prompts.sql_prompts import SQL_PROMPT, FINAL_ANSWER_PROMPT, ROUTER_PROMPT, REPHRASER_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +83,7 @@ def update_last_sql(session_id: str, sql: str):
     Atualiza a última query SQL executada para uma sessão.
 
     Esta função é chamada após a execução de uma query para persistir a informação
-    no estado da sessão, permitindo que o LLM a utilize como contexto para
-    perguntas de seguimento.
+    no estado da sessão.
 
     Args:
         session_id: O identificador da sessão.
@@ -157,8 +153,6 @@ def create_master_chain() -> Runnable:
                 logger.warning("Query retornou resultado vazio. Informando ao LLM.")
                 return "RESULTADO_VAZIO: Nenhuma informação encontrada para a sua solicitação."
             
-            # Este log de debug foi removido da função principal para manter o código limpo,
-            # mas a lógica que o chamava permanece.
             return result
             
         except Exception as e:
@@ -175,8 +169,6 @@ def create_master_chain() -> Runnable:
     ])
     router_chain = router_prompt_with_history | get_answer_llm() | StrOutputParser()
     
-    ## INÍCIO DA ATUALIZAÇÃO ##
-    # Função para formatar a saída do chat simples, adicionando o campo 'generated_sql'.
     def format_simple_chat_output(text_content: str) -> dict:
         """Adiciona uma chave 'generated_sql' à saída do chat simples para manter a estrutura de dados consistente."""
         return {
@@ -184,7 +176,6 @@ def create_master_chain() -> Runnable:
             "content": text_content,
             "generated_sql": "Nenhuma query foi necessária para esta resposta."
         }
-    ## FIM DA ATUALIZAÇÃO ##
 
     # Cadeia para conversas simples que não precisam de consulta ao banco de dados
     simple_chat_prompt_with_history = ChatPromptTemplate.from_messages([
@@ -195,41 +186,47 @@ def create_master_chain() -> Runnable:
         simple_chat_prompt_with_history
         | get_answer_llm() 
         | StrOutputParser()
-        ## INÍCIO DA ATUALIZAÇÃO ##
-        # A saída agora passa pela função de formatação para adicionar a chave 'generated_sql'.
         | RunnableLambda(format_simple_chat_output)
-        ## FIM DA ATUALIZAÇÃO ##
     )
 
-    # Cadeia de Geração de SQL: utiliza o esquema do banco e o histórico para gerar a query
+    ### NOVA LÓGICA: REPHRASER ###
+    # 1. Cria a cadeia do "Especialista em Contexto" (Rephraser)
+    # A tarefa dele é transformar uma pergunta ambígua em uma pergunta completa.
+    rephrasing_chain = (
+        {
+            "question": lambda x: x["question"],
+            "chat_history": lambda x: x["chat_history"]
+        }
+        | REPHRASER_PROMPT
+        | get_answer_llm()
+        | StrOutputParser()
+    )
+
+    # 2. Cadeia de Geração de SQL: agora é MUITO MAIS SIMPLES.
+    # Ela não precisa mais de `chat_history` ou `previous_sql`, pois sempre
+    # receberá uma pergunta completa e autônoma do Rephraser.
     sql_generation_chain = (
         RunnablePassthrough.assign(
-            # Passa o esquema do banco de dados para o prompt
-            schema=lambda _: get_compact_db_schema(),
-            # Injeta a última SQL executada como contexto para o LLM
-            previous_sql=lambda _, config: get_session_data(config["configurable"]["session_id"]).get("last_sql", "N/A")
+            schema=lambda _: get_compact_db_schema()
         )
+        # IMPORTANTE: Seu SQL_PROMPT em sql_prompts.py deve ser simplificado
+        # para receber apenas {question} e {schema}.
         | SQL_PROMPT
         | get_llm()
         | StrOutputParser()
     )
     
-    # Esta função de debug foi mantida, pois é útil e não afeta a lógica principal.
     def execute_and_log_query(data: dict) -> str:
         query = data["generated_sql"]
         result = execute_sql_query(query)
         logger.info(f"===> RESULTADO BRUTO DO DB (VIA LANGCHAIN): {result!r}")
         return result
 
-    ## INÍCIO DA ATUALIZAÇÃO ##
-    # A cadeia de SQL agora é reestruturada para garantir que a `generated_sql`
-    # seja preservada e incluída na saída final.
-
-    # 1. Define a parte da cadeia que gera a resposta final (texto ou gráfico)
+    # Cadeia que gera a resposta final (texto ou gráfico)
     final_response_chain = (
         {
             "result": lambda x: x["query_result"],
-            "question": lambda x: x["question"],
+            "question": lambda x: x["question"], # Receberá a pergunta já reescrita
             "format_instructions": lambda x: parser.get_format_instructions(),
         }
         | FINAL_ANSWER_PROMPT
@@ -237,33 +234,49 @@ def create_master_chain() -> Runnable:
         | parser
     )
 
-    # 2. Define uma função para combinar a resposta final com a query SQL gerada
     def combine_sql_with_response(data: dict) -> dict:
         """Pega a resposta final (texto/gráfico) e adiciona a chave 'generated_sql' a ela."""
         final_json_response = data["final_response_json"]
         final_json_response["generated_sql"] = data["generated_sql"]
         return final_json_response
 
-    # 3. Monta a nova `sql_chain`
+    # 3. Monta a nova `sql_chain` com o passo de reescrita no início
     sql_chain = (
-        RunnablePassthrough.assign(generated_sql=sql_generation_chain)
+        # Passo 1: Invoca o Rephraser para obter uma pergunta clara e autônoma.
+        RunnablePassthrough.assign(
+            standalone_question=rephrasing_chain
+        ).assign(
+            # Adiciona um log para vermos a pergunta reescrita. Ótimo para debug!
+            _log_standalone_question=RunnableLambda(
+                lambda x: logger.info(f"Pergunta Reescrita pelo Rephraser: '{x['standalone_question']}'")
+            )
+        )
+        # Passo 2: Gera o SQL usando APENAS a pergunta autônoma.
+        .assign(
+            generated_sql=lambda x: sql_generation_chain.invoke({"question": x["standalone_question"]})
+        )
+        # Passo 3: Executa a query e atualiza o estado da sessão (sem mudanças aqui).
         .assign(
             query_result=execute_and_log_query,
             _update_sql=lambda x, config: update_last_sql(config["configurable"]["session_id"], x["generated_sql"])
         )
-        # Executa a geração da resposta final e a armazena em uma nova chave 'final_response_json'
-        .assign(final_response_json=final_response_chain)
-        # Usa a nossa função para combinar o resultado final com a query
+        # Passo 4: Gera a resposta final, também usando a pergunta autônoma para contexto.
+        .assign(
+            final_response_json=lambda x: final_response_chain.invoke({
+                "question": x["standalone_question"],
+                "query_result": x["query_result"]
+            })
+        )
+        # Passo 5: Combina a resposta com o SQL gerado (sem mudanças aqui).
         | RunnableLambda(combine_sql_with_response)
     )
-    ## FIM DA ATUALIZAÇÃO ##
 
     # Cadeia de fallback para quando a pergunta não se encaixa em nenhuma categoria
     fallback_chain = RunnableLambda(lambda x: {"type": "text", "content": "Desculpe, não entendi sua pergunta. Pode reformular?"})
 
     # A lógica de roteamento principal, que direciona para a cadeia correta
     branch = RunnableBranch(
-        # Se a intenção for 'consulta_ao_banco_de_dados', usa a cadeia SQL
+        # Se a intenção for 'consulta_ao_banco_de_dados', usa a nova sql_chain com rephraser
         (lambda x: "consulta_ao_banco_de_dados" in x["topic"], sql_chain),
         # Se for 'saudacao_ou_conversa_simples', usa a cadeia de chat simples
         (lambda x: "saudacao_ou_conversa_simples" in x["topic"], simple_chat_chain),
