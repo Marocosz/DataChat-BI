@@ -2,24 +2,24 @@
 
 > SUPPBOT BI é uma solução de Business Intelligence conversacional para logística, baseada em IA generativa e RAG (Retrieval-Augmented Generation). O sistema utiliza LLMs para interpretar perguntas em linguagem natural, gerar consultas SQL dinâmicas e entregar respostas precisas e contextualizadas, incluindo gráficos e KPIs. Com arquitetura modular de prompts e memória de conversa, SUPPBOT BI oferece uma interface inteligente para análise avançada de dados logísticos via dashboard e principalmente chatbot.
 
-## Índice
+# Índice
 - [SuppBot - BI](#suppbot---bi)
-  - [Índice](#índice)
-  - [🛠️ Tecnologias Usadas](#️-tecnologias-usadas)
-    - [**Geral**](#geral)
-    - [**Frontend**](#frontend)
-    - [**Backend**](#backend)
-    - [Modelos LLM:](#modelos-llm)
-  - [Estrutura do Projeto](#estrutura-do-projeto)
-  - [Updates](#updates)
-  - [Funcionamento](#funcionamento)
-    - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
+- [Índice](#índice)
+- [🛠️ Tecnologias Usadas](#️-tecnologias-usadas)
+  - [**Geral**](#geral)
+  - [**Frontend**](#frontend)
+  - [**Backend**](#backend)
+  - [Modelos LLM:](#modelos-llm)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Updates](#updates)
+- [Funcionamento](#funcionamento)
+  - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
 
 ---
 
-## 🛠️ Tecnologias Usadas
+# 🛠️ Tecnologias Usadas
 
-### **Geral**
+## **Geral**
 - [Node.js](https://nodejs.org/) (**18.3.1**)
 - [npm](https://www.npmjs.com/) 
 - [Python](https://www.python.org/) (**3.12**)
@@ -28,7 +28,7 @@
 
 ---
 
-### **Frontend**
+## **Frontend**
 O frontend foi criado com **React** e utiliza:  
 - `react-router-dom` (navegação entre páginas)  
 - `axios` (requisições HTTP)  
@@ -39,7 +39,7 @@ O frontend foi criado com **React** e utiliza:
 
 ---
 
-### **Backend**
+## **Backend**
 O backend foi construído com **FastAPI** + **LangChain**, incluindo:  
 - `fastapi` (API backend)  
 - `uvicorn` (servidor ASGI)  
@@ -49,13 +49,13 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 - `pydantic` (validação de dados)  
 - `faker` (dados de teste)  
 
-### Modelos LLM:
+## Modelos LLM:
 -  `llama-3.3-70b-versatile` - Para geração das queries
 -  `llama-3.1-8b-instant` - Para as respostas amigáveis
 
 ---
 
-## Estrutura do Projeto
+# Estrutura do Projeto
 
 ```
 ├── 📁 backend/
@@ -110,7 +110,7 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 └── 📖 README.md
 ```
 
-## Updates
+# Updates
 
 > [!NOTE]
 > Versão 1
@@ -121,13 +121,15 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 
 ---
 
-## Funcionamento
+# Funcionamento
 
 Nesta seção, apresentamos uma visão detalhada de como cada parte do SUPPBOT BI opera, do frontend ao backend. Aqui você encontrará uma explicação clara de como os componentes, scripts e módulos interagem entre si, como os dados fluem do usuário até o banco de dados e de volta, e como a inteligência artificial é utilizada para processar perguntas, gerar consultas SQL e exibir respostas e gráficos.  
 
 O objetivo é fornecer ao leitor uma compreensão completa do funcionamento interno do sistema, permitindo não apenas usar o SUPPBOT BI, mas também entender, manter e expandir seu código com facilidade.
 
-### `backend/app/api/dashboard.py`
+---
+
+## `backend/app/api/dashboard.py`
 
 > API ROUTER PARA O DASHBOARD Padrões de arquitetura aplicados:
 > 1. Connection Pooling: Para reutilizar conexões com o banco de dados e melhorar a performance.
