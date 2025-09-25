@@ -134,9 +134,9 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > 2. Cache: Para armazenar em memória os resultados de queries lentas, tornando recargas rápidas.
 > 3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
 
-<h4 style="font-size:24px;">Endpoints</h4>
+<h4 style="font-size:60px;">Endpoints</h4>
 
-<h5 style="font-size:20px;">/kpis</h5>
+<h5 style="font-size:40px;">/kpis</h5>
 
 Retorna os principais **KPIs (Key Performance Indicators)** do dashboard logístico.
 
@@ -180,7 +180,7 @@ Um JSON com os seguintes campos:
 - Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
 
 
-<h5 style="font-size:20px;">/operacoes_por_status</h5>
+<h5 style="font-size:40px;">/operacoes_por_status</h5>
 
 Retorna a contagem de **operações logísticas agrupadas por status**.
 
