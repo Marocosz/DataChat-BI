@@ -2,18 +2,20 @@
 
 - [Endpoints](#endpoints)
 - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
-  - [`/kpis`](#kpis)
-  - [`/operacoes_por_status`](#operacoes_por_status)
-  - [`/valor_frete_por_uf`](#valor_frete_por_uf)
-  - [`/operacoes_por_dia`](#operacoes_por_dia)
-  - [`/top_clientes_por_valor`](#top_clientes_por_valor)
+  - [ENDPOINT GET - `/kpis`](#endpoint-get---kpis)
+  - [ENDPOINT GET - `/operacoes_por_status`](#endpoint-get---operacoes_por_status)
+  - [ENDPOINT GET - `/valor_frete_por_uf`](#endpoint-get---valor_frete_por_uf)
+  - [ENDPOINT GET - `/operacoes_por_dia`](#endpoint-get---operacoes_por_dia)
+  - [ENDPOINT GET - `/top_clientes_por_valor`](#endpoint-get---top_clientes_por_valor)
 
 
 # `backend/app/api/dashboard.py`
 
-## `/kpis`
+---
 
-Retorna os principais **KPIs (Key Performance Indicators)** do dashboard logístico.
+## ENDPOINT GET - `/kpis`
+
+**Retorna os principais KPIs (Key Performance Indicators) do dashboard logístico.**
 
 **Descrição:**  
 Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna métricas agregadas de desempenho das operações logísticas. Para otimizar a performance, os resultados são armazenados em cache; se os dados já estiverem em cache, o log indicará `CACHE HIT` e a query não será executada novamente.
@@ -54,10 +56,11 @@ Um JSON com os seguintes campos:
 - O valor de `valor_total_mercadorias` é convertido de `Decimal` para `float` para compatibilidade com JSON.  
 - Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
 
+---
 
-## `/operacoes_por_status`
+## ENDPOINT GET - `/operacoes_por_status`
 
-Retorna a contagem de **operações logísticas agrupadas por status**.
+**Retorna a contagem de operações logísticas agrupadas por status.** 
 
 **Descrição:**  
 Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna a quantidade de operações em cada status (`ENTREGUE`, `EM_TRANSITO`, etc.). As colunas da query já são renomeadas para `name` e `value`, facilitando o uso direto pelo frontend. Para otimizar a performance, os resultados são armazenados em cache; se os dados já estiverem em cache, o log indicará `CACHE HIT` e a query não será executada novamente.
@@ -95,9 +98,11 @@ Um JSON com os seguintes campos:
 - A query já retorna os resultados ordenados pela quantidade (`value`) em ordem decrescente.  
 - Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
 
-## `/valor_frete_por_uf`
+---
 
-Retorna os **valores totais de frete agrupados por UF de destino**.
+## ENDPOINT GET - `/valor_frete_por_uf`
+
+**Retorna os valores totais de frete agrupados por UF de destino**.
 
 **Descrição:**  
 Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna a soma do valor do frete por UF de destino. Apenas as UFs com valor de frete não nulo são consideradas. Para otimizar a performance, os resultados são armazenados em cache; se os dados já estiverem em cache, o log indicará `CACHE HIT` e a query não será executada novamente.
@@ -136,9 +141,11 @@ Um JSON com os seguintes campos:
 - Os resultados são limitados às 10 UFs com maior valor total de frete.  
 - Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
 
-## `/operacoes_por_dia`
+---
 
-Retorna a **quantidade de operações logísticas agrupadas por dia** nos últimos 30 dias.
+## ENDPOINT GET - `/operacoes_por_dia`
+
+**Retorna a quantidade de operações logísticas agrupadas por dia nos últimos 30 dias.**
 
 **Descrição:**  
 Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna o total de operações emitidas por dia. As datas são formatadas no padrão `dd/mm` para facilitar a visualização no frontend. Para otimizar a performance, os resultados são armazenados em cache; se os dados já estiverem em cache, o log indicará `CACHE HIT` e a query não será executada novamente.
@@ -177,9 +184,11 @@ Um JSON com os seguintes campos:
 - A data é formatada para `dd/mm` a partir do tipo `datetime.date` do PostgreSQL.  
 - Logs indicam quando os dados não estão em cache (`CACHE MISS`) e quando são servidos do cache (`CACHE HIT`).
 
-## `/top_clientes_por_valor`
+---
 
-Retorna os **principais clientes por valor total de mercadorias**.
+## ENDPOINT GET - `/top_clientes_por_valor`
+
+**Retorna os principais clientes por valor total de mercadorias.**
 
 **Descrição:**  
 Este endpoint consulta o banco de dados `operacoes_logisticas` e retorna a soma do valor das mercadorias agrupadas por cliente, mostrando os 5 clientes com maior valor. Para otimizar a performance, os resultados são armazenados em cache; se os dados já estiverem em cache, o log indicará `CACHE HIT` e a query não será executada novamente.

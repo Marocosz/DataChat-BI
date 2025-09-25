@@ -14,6 +14,7 @@
 - [Updates](#updates)
 - [Funcionamento](#funcionamento)
   - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
+  - [`backend/app/chains/sql_rag_chain.py`](#backendappchainssql_rag_chainpy)
 
 ---
 
@@ -139,5 +140,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > [!NOTE]
 > Para acessar a documentação dos endpoints acesse:
 > [ENDPOINTS](ENDPOINTS.md)
+
 ---
 
+## `backend/app/chains/sql_rag_chain.py`
