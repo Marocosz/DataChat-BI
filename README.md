@@ -2,8 +2,6 @@
 
 > SUPPBOT BI é uma solução de Business Intelligence conversacional para logística, baseada em IA generativa e RAG (Retrieval-Augmented Generation). O sistema utiliza LLMs para interpretar perguntas em linguagem natural, gerar consultas SQL dinâmicas e entregar respostas precisas e contextualizadas, incluindo gráficos e KPIs. Com arquitetura modular de prompts e memória de conversa, SUPPBOT BI oferece uma interface inteligente para análise avançada de dados logísticos via dashboard e principalmente chatbot.
 
----
-
 ## Índice
 - [SuppBot - BI](#suppbot---bi)
   - [Índice](#índice)
@@ -14,7 +12,10 @@
     - [Modelos LLM:](#modelos-llm)
   - [Estrutura do Projeto](#estrutura-do-projeto)
   - [Updates](#updates)
+    - [Melhorias:](#melhorias)
   - [Funcionamento](#funcionamento)
+    - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
+      - [Endpoints](#endpoints)
 
 ---
 
@@ -113,4 +114,19 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 
 ## Updates
 
+> Versão 1:
+
+### Melhorias:
+
 ## Funcionamento
+
+> Descrição do sistema
+
+### `backend/app/api/dashboard.py`
+
+> API ROUTER PARA O DASHBOARD Padrões de arquitetura aplicados:
+1. Connection Pooling: Para reutilizar conexões com o banco de dados e melhorar a performance.
+2. Cache: Para armazenar em memória os resultados de queries lentas, tornando recargas rápidas.
+3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
+
+#### Endpoints

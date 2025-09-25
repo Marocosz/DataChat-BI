@@ -1,6 +1,6 @@
 # =============================================================================
-# API ROUTER PARA O DASHBOARD - VERSÃO FINAL E DEFINITIVA
-#
+# API ROUTER PARA O DASHBOARD
+
 # Este arquivo contém os endpoints da API para o dashboard.
 # Padrões de arquitetura aplicados:
 # 1. Connection Pooling: Para reutilizar conexões com o banco de dados e melhorar a performance.
