@@ -157,7 +157,8 @@ def create_master_chain() -> Runnable:
                 logger.warning("Query retornou resultado vazio. Informando ao LLM.")
                 return "RESULTADO_VAZIO: Nenhuma informação encontrada para a sua solicitação."
             
-            logger.info(f"===> RESULTADO BRUTO DO DB (VIA LANGCHAIN): {result!r}")
+            # Este log de debug foi removido da função principal para manter o código limpo,
+            # mas a lógica que o chamava permanece.
             return result
             
         except Exception as e:
@@ -174,6 +175,17 @@ def create_master_chain() -> Runnable:
     ])
     router_chain = router_prompt_with_history | get_answer_llm() | StrOutputParser()
     
+    ## INÍCIO DA ATUALIZAÇÃO ##
+    # Função para formatar a saída do chat simples, adicionando o campo 'generated_sql'.
+    def format_simple_chat_output(text_content: str) -> dict:
+        """Adiciona uma chave 'generated_sql' à saída do chat simples para manter a estrutura de dados consistente."""
+        return {
+            "type": "text",
+            "content": text_content,
+            "generated_sql": "Nenhuma query foi necessária para esta resposta."
+        }
+    ## FIM DA ATUALIZAÇÃO ##
+
     # Cadeia para conversas simples que não precisam de consulta ao banco de dados
     simple_chat_prompt_with_history = ChatPromptTemplate.from_messages([
         MessagesPlaceholder(variable_name="chat_history"),
@@ -183,8 +195,10 @@ def create_master_chain() -> Runnable:
         simple_chat_prompt_with_history
         | get_answer_llm() 
         | StrOutputParser()
-        # Formata a saída como um dicionário para manter a consistência com a cadeia SQL
-        | RunnableLambda(lambda text: {"type": "text", "content": text})
+        ## INÍCIO DA ATUALIZAÇÃO ##
+        # A saída agora passa pela função de formatação para adicionar a chave 'generated_sql'.
+        | RunnableLambda(format_simple_chat_output)
+        ## FIM DA ATUALIZAÇÃO ##
     )
 
     # Cadeia de Geração de SQL: utiliza o esquema do banco e o histórico para gerar a query
@@ -200,26 +214,20 @@ def create_master_chain() -> Runnable:
         | StrOutputParser()
     )
     
+    # Esta função de debug foi mantida, pois é útil e não afeta a lógica principal.
     def execute_and_log_query(data: dict) -> str:
-        """
-        Função para executar a query SQL e retornar o resultado.
-        A query gerada é extraída do dicionário de dados (`data`).
-        """
         query = data["generated_sql"]
         result = execute_sql_query(query)
         logger.info(f"===> RESULTADO BRUTO DO DB (VIA LANGCHAIN): {result!r}")
         return result
 
-    # Cadeia de SQL Completa: Gerencia a geração, execução e formatação da resposta
-    sql_chain = (
-        RunnablePassthrough.assign(generated_sql=sql_generation_chain)
-        .assign(
-            # Executa a query gerada e armazena o resultado em `query_result`
-            query_result=execute_and_log_query,
-            # Chama a função para atualizar a última SQL na sessão do usuário
-            _update_sql=lambda x, config: update_last_sql(config["configurable"]["session_id"], x["generated_sql"])
-        )
-        | {
+    ## INÍCIO DA ATUALIZAÇÃO ##
+    # A cadeia de SQL agora é reestruturada para garantir que a `generated_sql`
+    # seja preservada e incluída na saída final.
+
+    # 1. Define a parte da cadeia que gera a resposta final (texto ou gráfico)
+    final_response_chain = (
+        {
             "result": lambda x: x["query_result"],
             "question": lambda x: x["question"],
             "format_instructions": lambda x: parser.get_format_instructions(),
@@ -228,6 +236,27 @@ def create_master_chain() -> Runnable:
         | get_answer_llm()
         | parser
     )
+
+    # 2. Define uma função para combinar a resposta final com a query SQL gerada
+    def combine_sql_with_response(data: dict) -> dict:
+        """Pega a resposta final (texto/gráfico) e adiciona a chave 'generated_sql' a ela."""
+        final_json_response = data["final_response_json"]
+        final_json_response["generated_sql"] = data["generated_sql"]
+        return final_json_response
+
+    # 3. Monta a nova `sql_chain`
+    sql_chain = (
+        RunnablePassthrough.assign(generated_sql=sql_generation_chain)
+        .assign(
+            query_result=execute_and_log_query,
+            _update_sql=lambda x, config: update_last_sql(config["configurable"]["session_id"], x["generated_sql"])
+        )
+        # Executa a geração da resposta final e a armazena em uma nova chave 'final_response_json'
+        .assign(final_response_json=final_response_chain)
+        # Usa a nossa função para combinar o resultado final com a query
+        | RunnableLambda(combine_sql_with_response)
+    )
+    ## FIM DA ATUALIZAÇÃO ##
 
     # Cadeia de fallback para quando a pergunta não se encaixa em nenhuma categoria
     fallback_chain = RunnableLambda(lambda x: {"type": "text", "content": "Desculpe, não entendi sua pergunta. Pode reformular?"})
@@ -245,16 +274,9 @@ def create_master_chain() -> Runnable:
     def format_final_output(chain_output: dict) -> dict:
         """
         Formata a saída final da cadeia para ser consumida pela API e pelo histórico.
-
-        Args:
-            chain_output: O dicionário de saída da cadeia anterior.
-
-        Returns:
-            Um dicionário com a resposta da API e a mensagem a ser adicionada ao histórico.
         """
         history_content = ""
         if isinstance(chain_output, dict):
-            # Extrai o conteúdo da resposta para o histórico, dependendo do tipo (texto ou gráfico)
             if chain_output.get("type") == "text":
                 history_content = chain_output.get("content", "Não foi possível gerar uma resposta.")
             elif chain_output.get("type") == "chart":

@@ -73,18 +73,13 @@
 .chart-container {
   color: var(--text-primary);
   min-width: 900px;
-  /* O overflow foi movido para uma div interna no ChartComponent.js */
 }
 
-/* --- ESTILOS PARA A DIV INTERNA DE ROLAGEM DENTRO DE .chart-container --- */
-/* Este seletor '[style*="overflow-x: auto"]' aplica os estilos à div que tem a rolagem */
 .chart-container>div[style*="overflow-x: auto"] {
   padding-bottom: 15px;
-  /* Adiciona espaço para a barra de rolagem */
   position: relative;
 }
 
-/* Efeito de sombra "fade out" na direita para indicar que há mais conteúdo */
 .chart-container>div[style*="overflow-x: auto"]::after {
   content: '';
   position: absolute;
@@ -96,7 +91,6 @@
   pointer-events: none;
 }
 
-/* Estilização da barra de rolagem para navegadores WebKit (Chrome, Safari, Edge) */
 .chart-container>div[style*="overflow-x: auto"]::-webkit-scrollbar {
   height: 8px;
 }
@@ -115,20 +109,12 @@
   background-color: #7183f2;
 }
 
-/* --- FIM DOS ESTILOS ATUALIZADOS --- */
-
 .chart-container h4 {
   margin-top: 0;
   margin-bottom: 15px;
 }
 
-.response-time-meta {
-  margin-top: 8px;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-align: right;
-  opacity: 0.8;
-}
+/* .response-time-meta foi movido para dentro de .message-footer */
 
 .loading-dots div {
   width: 8px;
@@ -160,3 +146,73 @@
     transform: scale(1.0);
   }
 }
+
+.message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.response-time-meta {
+  margin-top: 0; /* Resetado pois agora está no flex container */
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.query-toggle-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.query-toggle-button:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.query-toggle-arrow {
+  transition: transform 0.3s ease;
+}
+
+.query-toggle-arrow.toggled {
+  transform: rotate(180deg);
+}
+
+.query-display {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.query-display pre {
+  background-color: var(--background);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.query-display code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+
