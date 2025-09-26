@@ -19,6 +19,11 @@
   - [`backend/app/core/database.py`](#backendappcoredatabasepy)
   - [`backend/app/core/llm.py`](#backendappcorellmpy)
   - [`backend/app/prompts/sql_prompts.py`](#backendapppromptssql_promptspy)
+  - [`frontend/src/components/ChartComponent.js`](#frontendsrccomponentschartcomponentjs)
+  - [`frontend/src/components/ChatMessage.js`](#frontendsrccomponentschatmessagejs)
+  - [`frontend/src/pages/Chat.js`](#frontendsrcpageschatjs)
+  - [`frontend/src/pages/Dashboard.js`](#frontendsrcpagesdashboardjs)
+  - [`frontend/src/App.js`](#frontendsrcappjs)
 
 ---
 
@@ -259,3 +264,147 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >      seja em texto ou em um JSON estruturado para gráficos.
 >
 > Este design modular torna o sistema mais robusto, previsível e fácil de depurar.
+
+## `frontend/src/components/ChartComponent.js`
+
+> COMPONENTE DE VISUALIZAÇÃO DE GRÁFICOS
+>
+> Visão Geral do Componente:
+>
+> Este arquivo define um componente React reutilizável, `ChartComponent`, responsável por
+> renderizar diferentes tipos de gráficos (barras, linhas, pizza) com base nos dados
+> fornecidos pelo backend.
+>
+> Principais Funcionalidades:
+>
+> 1. Renderização Dinâmica: Utiliza uma estrutura `switch` para escolher qual tipo de
+>    gráfico da biblioteca `recharts` será renderizado (`BarChart`, `LineChart`, `PieChart`),
+>    com base na propriedade `chart_type` recebida.
+>
+> 2. Processamento de Dados: Mapeia os dados brutos recebidos do backend para um formato
+>    padrão (`{ name, value }`) que a biblioteca `recharts` consegue entender facilmente,
+>    tornando o componente flexível a diferentes nomes de campos (`x_axis`, `y_axis`).
+>
+> 3. Tooltips Personalizados: Implementa componentes de `Tooltip` customizados para
+>    melhorar a experiência do usuário, exibindo informações claras e formatadas
+>    quando o usuário interage com os gráficos.
+>
+> 4. Design Responsivo: Usa o `ResponsiveContainer` do `recharts` para garantir que os
+>    gráficos se ajustem adequadamente ao tamanho do container onde são inseridos.
+>
+> 5. Estilização Centralizada: Define paletas de cores e estilos consistentes para
+>    todos os gráficos, garantindo uma identidade visual coesa.
+
+
+## `frontend/src/components/ChatMessage.js`
+
+> COMPONENTE DE EXIBIÇÃO DE MENSAGEM DO CHAT
+>
+> Visão Geral do Componente:
+>
+> Este arquivo define o componente React `ChatMessage`, que é responsável por renderizar
+> uma única mensagem dentro da janela de chat. Ele foi projetado para ser flexível e
+> inteligente, adaptando sua aparência e funcionalidade com base no remetente e no tipo
+> de conteúdo.
+>
+> Principais Funcionalidades:
+>
+> 1. Distinção de Remetente: Aplica estilos e avatares diferentes para mensagens enviadas
+>    pelo 'usuário' (`FiUser`) e pelo 'bot' (`FiCpu`).
+>
+> 2. Renderização de Conteúdo Dinâmico: É capaz de renderizar múltiplos tipos de conteúdo.
+>    Se o conteúdo for do tipo 'text', exibe um parágrafo simples. Se for 'chart', renderiza
+>    o `ChartComponent` para exibir um gráfico interativo.
+>
+> 3. Interatividade (Visualizador de Query): Para mensagens do bot que foram geradas a partir
+>    de uma consulta ao banco, o componente exibe um botão "Ver Query". Ao ser clicado,
+>    ele revela a query SQL exata que foi executada no backend, oferecendo transparência
+>    e uma ótima ferramenta de depuração.
+>
+> 4. Gerenciamento de Estado Local: Utiliza o hook `useState` para controlar a visibilidade
+>    do visualizador da query SQL, mantendo o estado de cada mensagem de forma independente.
+
+
+## `frontend/src/pages/Chat.js`
+
+> COMPONENTE DA PÁGINA PRINCIPAL DE CHAT
+>
+> Visão Geral do Componente:
+>
+> Este arquivo define o componente `Chat`, que funciona como o "container" inteligente para
+> toda a interface de conversação. Ele é responsável por gerenciar o estado da aplicação,
+> lidar com a interação do usuário e orquestrar a comunicação com o backend.
+>
+> Principais Responsabilidades:
+>
+> 1. Gerenciamento de Estado (`useState`):
+>    - `messages`: Mantém um array com todo o histórico da conversa exibido na tela.
+>    - `input`: Controla o valor atual do campo de texto onde o usuário digita.
+>    - `isLoading`: Gerencia a exibição do indicador de "carregando" enquanto espera
+>      a resposta do backend.
+>    - `sessionId`: Armazena o ID único da sessão de chat, garantindo que o backend
+>      possa rastrear o contexto da conversa.
+>
+> 2. Lógica de Ciclo de Vida (`useEffect`):
+>    - Na primeira renderização, gera um `sessionId` único que persiste por toda a conversa.
+>    - A cada nova mensagem, rola a janela de chat para o final para manter a visibilidade.
+>
+> 3. Comunicação com a API (`axios`):
+>    - No envio da mensagem, formata e envia a pergunta do usuário junto com o `sessionId`
+>      para o endpoint `/chat` do backend.
+>    - Processa a resposta do backend ou trata possíveis erros de comunicação.
+>
+> 4. Renderização da UI:
+>    - Mapeia o array de `messages` para renderizar uma lista de componentes `ChatMessage`.
+>    - Exibe o formulário de entrada de texto e o botão de envio.
+
+## `frontend/src/pages/Dashboard.js`
+
+> COMPONENTE DA PÁGINA DO DASHBOARD
+>
+> Visão Geral do Arquivo:
+>
+> Este arquivo define a página de Dashboard completa, que exibe visualizações de dados e
+> indicadores chave de performance (KPIs) sobre as operações logísticas. A arquitetura
+> do arquivo é dividida em quatro partes principais para máxima reutilização e clareza:
+>
+> 1. useDataFetching (Hook Customizado):
+>    - Um hook React reutilizável que encapsula toda a lógica de busca de dados da API.
+>    - Gerencia os estados de carregamento (loading), erro e os dados recebidos.
+>    - Implementa um mecanismo de "polling" que atualiza os dados automaticamente a cada
+>      15 segundos, criando um dashboard "ao vivo".
+>
+> 2. KpiGrid (Componente de Apresentação):
+>    - Um componente dedicado a buscar e exibir a grade de KPIs no topo da página.
+>
+> 3. ChartWrapper (Componente Container/Wrapper):
+>    - Um invólucro genérico para cada gráfico. Ele utiliza o hook `useDataFetching` para
+>      buscar os dados do gráfico e lida com a exibição dos estados de carregamento,
+>      erro ou dados vazios. Isso mantém o componente principal do Dashboard limpo.
+>
+> 4. Dashboard (Componente Principal da Página):
+>    - Monta o layout completo da página, incluindo o cabeçalho, a grade de KPIs e
+>      múltiplas instâncias do `ChartWrapper` para renderizar cada gráfico específico.
+
+## `frontend/src/App.js`
+
+> COMPONENTE RAIZ E ROTEADOR DA APLICAÇÃO
+>
+> Visão Geral do Componente:
+>
+> Este arquivo define o componente `App`, que serve como o ponto de entrada e o componente
+> de mais alto nível para toda a aplicação React. Sua principal responsabilidade é definir
+> a estrutura de layout geral e gerenciar o sistema de roteamento de páginas.
+>
+> Principais Funcionalidades:
+>
+> 1. Configuração do Roteador: Utiliza o `react-router-dom` para habilitar a navegação
+>    entre diferentes "páginas" (componentes) da aplicação sem a necessidade de recarregar
+>    a página inteira, criando uma experiência de Single-Page Application (SPA).
+>
+> 2. Layout Persistente: Renderiza componentes comuns que devem aparecer em todas as
+>    páginas, como a barra de navegação (`Navbar`), garantindo uma interface consistente.
+>
+> 3. Mapeamento de Rotas: Define quais componentes de página (`Dashboard`, `Chat`) devem
+>    ser renderizados com base na URL atual do navegador. Por exemplo, a URL "/" renderiza
+>    o Dashboard, enquanto "/chat" renderiza a página de Chat.
