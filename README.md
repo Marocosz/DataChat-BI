@@ -24,6 +24,9 @@
   - [`frontend/src/pages/Chat.js`](#frontendsrcpageschatjs)
   - [`frontend/src/pages/Dashboard.js`](#frontendsrcpagesdashboardjs)
   - [`frontend/src/App.js`](#frontendsrcappjs)
+- [🎯 Aplicabilidade](#-aplicabilidade)
+  - [1. Análise Conversacional em Tempo Real via Chatbot](#1-análise-conversacional-em-tempo-real-via-chatbot)
+  - [2. Monitoramento Estratégico com o Dashboard](#2-monitoramento-estratégico-com-o-dashboard)
 - [🏗️ Estrutura do Banco de Dados](#️-estrutura-do-banco-de-dados)
   - [Diagrama de Entidade-Relacionamento (ERD)](#diagrama-de-entidade-relacionamento-erd)
   - [Detalhamento das Tabelas](#detalhamento-das-tabelas)
@@ -254,11 +257,11 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >      direcionando-a para o caminho correto.
 >
 > 2. O Especialista em Contexto (`REPHRASER_PROMPT`):
->    - Responsabilidade: Resolver ambiguidades, contexto e correções.
+>    - Responsabilidade: Resolver ambiguidades, contexto e correções.
 >    - Ação: Analisa a pergunta e o histórico para realizar três ações chave:
->      - **Reescrever** perguntas de acompanhamento (ex: "e o total dele?") em perguntas completas.
->      - **Manter** perguntas que já são claras e autônomas, sem alterá-las.
->      - **Corrigir** a rota ao interpretar reclamações do usuário (ex: "você errou"), reformulando a pergunta anterior com base na nova informação.
+>    - **Reescrever** perguntas de acompanhamento (ex: "e o total dele?") em perguntas completas.
+>    - **Manter** perguntas que já são claras e autônomas, sem alterá-las.
+>    - **Corrigir** a rota ao interpretar reclamações do usuário (ex: "você errou"), reformulando a pergunta anterior com base na nova informação.
 >
 > 3. O Engenheiro SQL (`SQL_PROMPT`):
 >    - Responsabilidade: Traduzir linguagem natural para SQL.
@@ -416,6 +419,60 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >    ser renderizados com base na URL atual do navegador. Por exemplo, a URL "/" renderiza
 >    o Dashboard, enquanto "/chat" renderiza a página de Chat.
 
+---
+
+# 🎯 Aplicabilidade
+
+O **SUPPBOT BI** foi projetado para transformar a maneira como equipes de logística interagem com seus dados, substituindo planilhas complexas e relatórios estáticos por uma plataforma de Business Intelligence dinâmica e intuitiva. A solução atende a diferentes níveis da operação, desde analistas que precisam de respostas rápidas até gestores que necessitam de uma visão estratégica.
+
+A aplicabilidade se divide em duas interfaces principais:
+
+## 1. Análise Conversacional em Tempo Real via Chatbot
+
+O coração do projeto é um chatbot inteligente que permite a qualquer membro da equipe "conversar" com o banco de dados em português, sem precisar saber SQL. Isso democratiza o acesso à informação e acelera a tomada de decisão.
+
+**Casos de Uso:**
+* **Gerente de Logística:** Pode obter métricas complexas instantaneamente.
+    * `"Qual o valor total de frete para o estado de São Paulo no último trimestre?"`
+    * `"Me mostre um gráfico comparando as operações entregues e canceladas no último mês."`
+* **Analista de Dados:** Pode explorar os dados e validar hipóteses rapidamente.
+    * `"Qual a natureza de carga com o maior peso médio por operação?"`
+    * `"e qual o valor total de frete para essa natureza de carga?"` (demonstrando o uso de memória)
+* **Equipe de Atendimento ao Cliente:** Pode rastrear operações específicas sem acessar sistemas complexos.
+    * `"Qual o status da operação com o código de rastreio 'VV820450103ER'?"`
+
+> [!TIP]
+> Para uma lista exaustiva com dezenas de exemplos de perguntas, desde as mais simples até as mais complexas, consulte nosso roteiro de testes detalhado no arquivo: [`backend/testes.txt`](./backend/testes.txt).
+
+![Interface do Chatbot do SuppBot BI](./tela_chat.png)
+*Interface do Chatbot, capaz de responder com texto e gerar gráficos dinâmicos.*
+
+---
+
+## 2. Monitoramento Estratégico com o Dashboard
+
+Para uma visão macro e de alto nível, o Dashboard oferece um painel consolidado com os indicadores de performance (KPIs) mais importantes da operação. Graças a um sistema de polling, os dados são atualizados automaticamente, funcionando como uma central de monitoramento "ao vivo".
+
+**Casos de Uso:**
+* **Diretor de Operações:** Consegue, em uma única tela, visualizar a saúde da operação:
+    * Total de operações em andamento.
+    * Percentual de entregas concluídas vs. em trânsito.
+    * Valor total das mercadorias sob responsabilidade da empresa.
+* **Equipe de Vendas ou Contas:** Pode identificar rapidamente os clientes mais valiosos ou com maior volume de operações para focar em ações de relacionamento.
+
+![Dashboard de Logística do SuppBot BI](./tela_dashboard.png)
+*Visão geral do Dashboard, com KPIs e gráficos pré-configurados para análise estratégica.*
+
+> [!IMPORTANT]
+> **Sobre a Latência (Tempo de Resposta) da IA**
+>
+> Nos logs de teste, é possível observar que algumas respostas da IA levaram de 15 a 30 segundos para serem geradas. É fundamental esclarecer que essa demora **não foi causada por uma ineficiência no código da aplicação**, mas sim por instabilidades momentâneas ou limites de taxa na API da Groq (o provedor do LLM).
+>
+> Isso é evidenciado pelos erros `429 Too Many Requests` (limite de requisições atingido) e `500 Internal Server Error` (erro no servidor da API) visíveis nos logs. A biblioteca `groq` utilizada no projeto automaticamente tentou reenviar a requisição após esses erros, o que causou a longa espera percebida pelo usuário.
+>
+> Em condições normais de operação da API, o tempo de resposta esperado para uma pergunta complexa que envolve múltiplos passos (Rephraser, Geração de SQL e Resposta Final) fica tipicamente na faixa de **2 a 5 segundos**.
+
+---
 
 # 🏗️ Estrutura do Banco de Dados
 

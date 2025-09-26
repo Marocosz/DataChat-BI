@@ -1,66 +1,137 @@
-# ==========================================
-# SCRIPT DE TESTES - SUPPBOT BI
-# ==========================================
+# ====================================================================================
+# ====================================================================================
+#
+#                     ROTEIRO DE TESTES DE VALIDAÇÃO - SUPPBOT BI
+#
+# Propósito do Arquivo:
+#
+# Este arquivo contém um conjunto estruturado de prompts para validar sistematicamente
+# todas as funcionalidades do chatbot. Os testes são organizados em suítes, cada uma
+# focada em uma capacidade específica da arquitetura de IA, desde o roteamento
+# básico até a complexa manutenção de contexto em conversas com múltiplos turnos.
+#
+# ====================================================================================
+# ====================================================================================
 
-# --- Testes de Roteamento e Saudações ---
+
+# ====================================================================================
+# Suíte 1: Testes de Roteamento e Saudações
+# ------------------------------------------------------------------------------------
+# Objetivo: Verificar a capacidade do `ROUTER_PROMPT` de classificar corretamente a
+# intenção do usuário, desviando conversas simples para a `simple_chat_chain` e
+# evitando o acesso desnecessário ao banco de dados. A IA deve responder de
+# forma conversacional, sem gerar queries SQL.
+# ====================================================================================
 Olá
 Bom dia, tudo bem?
 Obrigado
 Tchau
 
-# --- Testes de Consultas Simples (Respostas de Texto) ---
-Qual o status da operação com código de rastreio 'BR123456789SP'? # Não existe
-Qual o status da operação com código de rastreio 'VV820450103ER'? # Existe
+
+# ====================================================================================
+# Suíte 2: Testes de Consultas Simples (Respostas de Texto)
+# ------------------------------------------------------------------------------------
+# Objetivo: Validar a capacidade do bot de traduzir perguntas diretas em queries
+# `SELECT ... WHERE` simples e retornar um único dado textual.
+# ====================================================================================
+# Teste de "caminho infeliz": o código de rastreio não existe no banco.
+# O bot deve informar que não encontrou a informação.
+Qual o status da operação com código de rastreio 'BR123456789SP'?
+
+# Teste de "caminho feliz": o código de rastreio existe.
+# O bot deve encontrar e retornar o status correto ('EM_TRANSITO').
+Qual o status da operação com código de rastreio 'VV820450103ER'?
+
+# Testa a busca por uma coluna de texto longo (`observacoes`).
 Mostre as observações da operação de código 'OP-98765'.
+
+# Testa a busca em uma tabela relacionada (`clientes`) usando um filtro (`cnpj_cpf`).
 Qual o email de contato do cliente com CNPJ '12.345.678/0001-99'?
+
+# Testa a busca e o retorno de um campo de data (`data_emissao`).
 Qual a data de emissão da operação 'OP-12345'?
 
-# --- Testes de Agregação Simples (Cálculos com Resposta de Texto) ---
+
+# ====================================================================================
+# Suíte 3: Testes de Agregação Simples (Cálculos com Resposta de Texto)
+# ------------------------------------------------------------------------------------
+# Objetivo: Testar a habilidade do bot de gerar queries com funções de agregação
+# (`SUM`, `COUNT`, `AVG`, `MAX`) que resultam em um único valor numérico ou de data.
+# ====================================================================================
 Qual o valor total de todas as mercadorias cadastradas?
 Quantas operações foram canceladas no total?
 Qual o peso médio das cargas?
 Qual foi a data da entrega mais recente que foi realizada?
 
-# --- Testes de Geração de Gráfico de Barras ---
+
+# ====================================================================================
+# Suíte 4: Testes de Geração de Gráficos (Barras, Linha e Pizza)
+# ------------------------------------------------------------------------------------
+# Objetivo: Verificar se o `FINAL_ANSWER_PROMPT` consegue:
+# 1) Identificar a necessidade de um gráfico a partir da pergunta ou dos dados.
+# 2) Gerar a query SQL correta para agrupar os dados (geralmente com `GROUP BY`).
+# 3) Formatar a saída no JSON estruturado que o frontend espera para renderizar o gráfico.
+# ====================================================================================
+
+# --- Testes de Gráfico de Barras ---
 Me mostre um gráfico com a quantidade de operações por status.
 Qual o valor total de frete agrupado por estado de destino?
 Quais os 5 clientes com o maior valor de mercadoria transportada?
 Gere um gráfico com a quantidade de volumes por tipo de operação.
 
-# --- Testes de Geração de Gráfico de Linha ---
+# --- Testes de Gráfico de Linha ---
 Me mostre um gráfico de linha com a quantidade de operações criadas por dia no último mês.
 Qual a evolução do valor total de fretes por dia nos últimos 15 dias? Gere um gráfico de linha.
 Gere uma linha do tempo com o número de entregas concluídas por dia.
 
-# --- Testes de Geração de Gráfico de Pizza ---
+# --- Testes de Gráfico de Pizza ---
 Me faça um gráfico de pizza mostrando a distribuição das operações por tipo.
 Qual a proporção de operações por status? Mostre em um gráfico de pizza.
 Gere um gráfico de pizza dos 5 maiores clientes por quantidade de operações.
 
-# --- Testes de Perguntas Complexas (Combinando Lógicas) ---
+
+# ====================================================================================
+# Suíte 5: Testes de Perguntas Complexas
+# ------------------------------------------------------------------------------------
+# Objetivo: Avaliar a capacidade do bot de lidar com perguntas que exigem lógicas de
+# SQL mais avançadas, como `JOIN`s com múltiplas condições, comparações entre
+# subgrupos (`HAVING`), e múltiplos filtros na cláusula `WHERE`.
+# ====================================================================================
 Liste os nomes dos clientes e a quantidade de operações em trânsito para cada um, apenas para o estado de São Paulo.
-Qual o cliente que teve a operation com o maior valor de frete que já foi entregue?
+Qual o cliente que teve a operação com o maior valor de frete que já foi entregue?
 Compare o valor médio de mercadoria entre as operações com status 'ENTREGUE' e 'CANCELADO'.
 Existem operações emitidas em 2024 que pesam mais de 500 kg e foram para o Rio de Janeiro?
 
-# --- Testes de Conversa com Memória ---
 
-# Cenário 1: Teste Direto (Padrão exato dos exemplos Few-Shot)
-# Objetivo: Garantir que a IA aprendeu a lição do exemplo com SUM.
+# ====================================================================================
+# Suíte 6: Testes de Conversa com Memória (Contexto)
+# ------------------------------------------------------------------------------------
+# Objetivo: Esta é a suíte de testes mais crítica. O objetivo é validar a arquitetura
+# de múltiplos passos (`Rephraser` -> `SQL Generator`) e a persistência de sessão,
+# garantindo que o bot consiga responder corretamente a perguntas de acompanhamento
+# que dependem do histórico da conversa.
+# ====================================================================================
+
+# --- Cenário 1: Teste Direto (Padrão exato dos exemplos Few-Shot) ---
+# Objetivo: Garantir que a IA aprendeu a lição do exemplo com `SUM`.
 Qual o cliente com maior valor total de mercadorias?
 e quantas operações ele teve no total?
 
-# Cenário 2: Testando o Problema Original (Generalização com COUNT e WHERE)
-# Objetivo: Garantir que a IA aplica o aprendizado para o problema original.
+# --- Cenário 2: Testando o Problema Original (Generalização com COUNT e WHERE) ---
+# Objetivo: Garantir que a IA aplica o aprendizado para o problema que falhava antes.
+# O bot precisa entender que "desse mesmo cliente" se refere ao cliente com mais
+# *operações canceladas*, e não ao cliente com maior valor.
 Qual o cliente com o maior número de operações canceladas?
 E qual o valor total de mercadorias desse mesmo cliente?
 
-# Cenário 3: Testando a Generalização (Métricas Geográficas)
-# Objetivo: Verificar se a IA consegue adaptar a lógica para colunas e agregações diferentes.
+# --- Cenário 3: Testando a Generalização (Métricas Geográficas) ---
+# Objetivo: Verificar se a IA consegue adaptar a lógica de contexto para colunas
+# e agregações diferentes (geográficas vs. financeiras).
 Qual o estado (UF) de destino com o maior valor de frete?
 e quantas operações foram para lá?
 
-# Cenário 4: Teste de Resistência (Lógica mais Complexa com AVG)
-# Objetivo: Levar a capacidade de raciocínio da IA ao limite.
+# --- Cenário 4: Teste de Resistência (Lógica mais Complexa com AVG) ---
+# Objetivo: Levar a capacidade de raciocínio contextual da IA ao limite com uma
+# métrica inicial mais complexa (`AVG`).
 Qual a natureza de carga com o maior peso médio por operação?
 qual o valor total de frete para essa natureza de carga?
