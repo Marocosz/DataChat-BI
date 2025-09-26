@@ -24,9 +24,11 @@
 #      direcionando-a para o caminho correto.
 #
 # 2. O Especialista em Contexto (`REPHRASER_PROMPT`):
-#    - Responsabilidade: Resolver ambiguidades e contexto.
-#    - Ação: Pega perguntas de acompanhamento (ex: "e para ele?") e as reescreve
-#      como perguntas completas e autônomas, usando o histórico do chat.
+#    - Responsabilidade: Resolver ambiguidades, contexto e correções.
+#    - Ação: Analisa a pergunta e o histórico para realizar três ações chave:
+#      - **Reescrever** perguntas de acompanhamento (ex: "e o total dele?") em perguntas completas.
+#      - **Manter** perguntas que já são claras e autônomas, sem alterá-las.
+#      - **Corrigir** a rota ao interpretar reclamações do usuário (ex: "você errou"), reformulando a pergunta anterior com base na nova informação.
 #
 # 3. O Engenheiro SQL (`SQL_PROMPT`):
 #    - Responsabilidade: Traduzir linguagem natural para SQL.
@@ -275,43 +277,63 @@ consulta_ao_banco_de_dados
 # Esta é a primeira etapa da cadeia de consulta ao banco. Ele pega uma pergunta
 # potencialmente ambígua e o histórico do chat e a transforma em uma pergunta
 # completa e autônoma, pronta para ser enviada ao Gerador de SQL.
-REPHRASER_PROMPT = PromptTemplate.from_template(
-    """
-    Sua única tarefa é reescrever a pergunta do usuário para que ela seja autônoma, usando o histórico da conversa como contexto.
-    - Se a pergunta do usuário já for completa e não precisar de contexto, apenas a retorne como está.
-    - Se a pergunta for um acompanhamento (usando 'ele', 'disso', 'e para lá?'), use as mensagens anteriores para completá-la.
-    - Seja conciso e direto na pergunta reescrita.
+# Define exemplos para ensinar o Rephraser a se comportar em diferentes situações.
+REPHRASER_EXAMPLES = [
+    {
+        "input": "e qual o total de operações dele?",
+        "chat_history": "Human: Qual o cliente com maior valor de mercadorias?\nAI: O cliente é 'Porto'.",
+        "output": "Qual o total de operações do cliente 'Porto'?"
+    },
+    {
+        "input": "Qual o valor total de frete para o estado de São Paulo?",
+        "chat_history": "Human: Olá\nAI: Olá, como posso ajudar?",
+        "output": "Qual o valor total de frete para o estado de São Paulo?"
+    },
+    {
+        "input": "não, você errou. eu queria o valor total.",
+        "chat_history": "Human: Qual o número de operações canceladas?\nAI: O número é 120.",
+        "output": "Qual o valor total das operações canceladas?"
+    }
+]
 
-    ---
-    Histórico da Conversa:
-    {chat_history}
-    ---
-
-    Pergunta do Usuário: {question}
-    Pergunta Reescrita:
-    """
+# Formata os exemplos para o prompt.
+example_prompt = PromptTemplate.from_template(
+    "Histórico:\n{chat_history}\nPergunta do Usuário: {input}\nPergunta Reescrita: {output}"
 )
+
+# Define o novo prompt principal com instruções mais rígidas e o formato de exemplos.
+REPHRASER_PROMPT = FewShotPromptTemplate(
+    examples=REPHRASER_EXAMPLES,
+    example_prompt=example_prompt,
+    prefix="""Sua tarefa é reescrever a pergunta do usuário para que ela seja autônoma, usando o histórico da conversa.
+
+Regras Importantes:
+- Sua resposta DEVE SER APENAS a pergunta reescrita, sem nenhuma explicação, introdução ou frase extra.
+- Se a pergunta do usuário já for completa, apenas a retorne exatamente como está.
+- Se a pergunta for uma correção (ex: 'não era isso', 'você errou'), use o histórico para entender a pergunta anterior e tente reescrevê-la com a nova instrução do usuário.
+
+Considere os seguintes exemplos:""",
+    suffix="Histórico:\n{chat_history}\nPergunta do Usuário: {question}\nPergunta Reescrita:",
+    input_variables=["question", "chat_history"],
+    example_separator="\n\n"
+)
+
 
 """
 --- Exemplo de Uso e Saída (REPHRASER_PROMPT) ---
 
-INPUT (Exemplo 1 - Pergunta já completa):
+Este exemplo demonstra como o prompt lida com um usuário corrigindo uma resposta errada do bot.
+
+INPUT (O que a cadeia fornece a este prompt):
 {
-  "question": "Qual o valor total de frete para o estado de SP?",
-  "chat_history": ["user: Olá", "assistant: Olá, como posso ajudar?"]
+  "question": "Não, não era isso. Eu perguntei sobre o VALOR TOTAL.",
+  "chat_history": [
+      # O histórico contém a pergunta original e a resposta errada do bot
+      "Human: Qual o valor total de todas as mercadorias cadastradas?",
+      "AI: O número total de operações com código de rastreio é 250.000."
+  ]
 }
 
-SAÍDA GERADA PELO LLM (Exemplo 1):
-Qual o valor total de frete para o estado de SP?
-
----
-
-INPUT (Exemplo 2 - Pergunta de acompanhamento):
-{
-  "question": "e quantas operações ele teve?",
-  "chat_history": ["user: Qual o cliente com maior valor de mercadorias?", "assistant: O cliente com maior valor é 'Porto'."]
-}
-
-SAÍDA GERADA PELO LLM (Exemplo 2):
-Qual o número total de operações que o cliente 'Porto' teve?
+SAÍDA GERADA PELO LLM:
+Qual o valor total de todas as mercadorias cadastradas?
 """

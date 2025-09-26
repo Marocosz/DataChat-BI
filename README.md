@@ -1,18 +1,18 @@
-# SuppBot - BI
+# 🤖 SuppBot - BI
 
 > SUPPBOT BI é uma solução de Business Intelligence conversacional para logística, baseada em IA generativa e RAG (Retrieval-Augmented Generation). O sistema utiliza LLMs para interpretar perguntas em linguagem natural, gerar consultas SQL dinâmicas e entregar respostas precisas e contextualizadas, incluindo gráficos e KPIs. Com arquitetura modular de prompts e memória de conversa, SUPPBOT BI oferece uma interface inteligente para análise avançada de dados logísticos via dashboard e principalmente chatbot.
 
-# Índice
-- [SuppBot - BI](#suppbot---bi)
-- [Índice](#índice)
+# 🗂️ Índice
+- [🤖 SuppBot - BI](#-suppbot---bi)
+- [🗂️ Índice](#️-índice)
 - [🛠️ Tecnologias Usadas](#️-tecnologias-usadas)
   - [**Geral**](#geral)
   - [**Frontend**](#frontend)
   - [**Backend**](#backend)
   - [Modelos LLM:](#modelos-llm)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Updates](#updates)
-- [Funcionamento](#funcionamento)
+- [🌳 Estrutura do Projeto](#-estrutura-do-projeto)
+- [🔄 Updates](#-updates)
+- [🧠 Funcionamento](#-funcionamento)
   - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
   - [`backend/app/chains/sql_rag_chain.py`](#backendappchainssql_rag_chainpy)
   - [`backend/app/core/config.py`](#backendappcoreconfigpy)
@@ -70,7 +70,7 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 
 ---
 
-# Estrutura do Projeto
+# 🌳 Estrutura do Projeto
 
 ```
 ├── 📁 backend/
@@ -125,7 +125,7 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 └── 📖 README.md
 ```
 
-# Updates
+# 🔄 Updates
 
 > [!NOTE]
 > Versão 1
@@ -136,7 +136,7 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 
 ---
 
-# Funcionamento
+# 🧠 Funcionamento
 
 Nesta seção, apresentamos uma visão detalhada de como cada parte do SUPPBOT BI opera, do frontend ao backend. Aqui você encontrará uma explicação clara de como os componentes, scripts e módulos interagem entre si, como os dados fluem do usuário até o banco de dados e de volta, e como a inteligência artificial é utilizada para processar perguntas, gerar consultas SQL e exibir respostas e gráficos.  
 
@@ -254,9 +254,11 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >      direcionando-a para o caminho correto.
 >
 > 2. O Especialista em Contexto (`REPHRASER_PROMPT`):
->    - Responsabilidade: Resolver ambiguidades e contexto.
->    - Ação: Pega perguntas de acompanhamento (ex: "e para ele?") e as reescreve
->      como perguntas completas e autônomas, usando o histórico do chat.
+>    - Responsabilidade: Resolver ambiguidades, contexto e correções.
+>    - Ação: Analisa a pergunta e o histórico para realizar três ações chave:
+>      - **Reescrever** perguntas de acompanhamento (ex: "e o total dele?") em perguntas completas.
+>      - **Manter** perguntas que já são claras e autônomas, sem alterá-las.
+>      - **Corrigir** a rota ao interpretar reclamações do usuário (ex: "você errou"), reformulando a pergunta anterior com base na nova informação.
 >
 > 3. O Engenheiro SQL (`SQL_PROMPT`):
 >    - Responsabilidade: Traduzir linguagem natural para SQL.
