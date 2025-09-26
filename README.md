@@ -32,6 +32,9 @@
   - [Detalhamento das Tabelas](#detalhamento-das-tabelas)
     - [Tabela: clientes](#tabela-clientes)
     - [Tabela: operacoes\_logisticas](#tabela-operacoes_logisticas)
+- [🤝 Agradecimentos e Contato](#-agradecimentos-e-contato)
+  - [Dúvidas, Bugs ou Sugestões?](#dúvidas-bugs-ou-sugestões)
+  - [Vamos nos Conectar!](#vamos-nos-conectar)
 
 ---
 
@@ -545,3 +548,31 @@ erDiagram
 | data_emissao          | TIMESTAMP           | Data e hora em que a operação foi criada no sistema.                      |
 | data_entrega_realizada| TIMESTAMP           | Data e hora em que a entrega foi oficialmente concluída (pode ser nulo).  |
 | cliente_id            | INTEGER             | Chave estrangeira que referencia a coluna id da tabela clientes.          |
+
+
+# 🤝 Agradecimentos e Contato
+
+Agradeço imensamente pelo seu interesse no **SUPPBOT BI**! Este projeto foi uma jornada de aprendizado e desenvolvimento, e fico feliz em compartilhá-lo com a comunidade.
+
+Um agradecimento especial a todas as fantásticas tecnologias e comunidades open-source que tornaram este projeto possível, especialmente às equipes por trás do React, FastAPI, LangChain e PostgreSQL.
+
+---
+
+## Dúvidas, Bugs ou Sugestões?
+
+Se você encontrar algum bug, tiver alguma dúvida técnica sobre o código ou uma sugestão de melhoria, a melhor forma de entrar em contato é **abrindo uma Issue** diretamente no repositório do GitHub. Isso ajuda a manter tudo organizado e visível para todos.
+
+- **[➡️ Abrir uma Issue no GitHub](https://github.com/Marocosz/catalogo_supp_bot/issues)**
+
+---
+
+## Vamos nos Conectar!
+
+Adoraria ouvir seu feedback e me conectar com outros desenvolvedores e entusiastas de tecnologia. Você pode me encontrar nas seguintes plataformas:
+
+- **Desenvolvido por:** `Marcos Rodrigues`
+- 💼 **LinkedIn:** [`https://www.linkedin.com/in/marcosrodriguesptc`](https://www.linkedin.com/in/marcosrodriguesptc/)
+- 🐙 **GitHub:** [`https://github.com/Marocosz`](https://github.com/Marocosz)
+- 📧 **Email:** `marcosrodriguesepro@gmail.com`
+
+Sinta-se à vontade para se conectar!
