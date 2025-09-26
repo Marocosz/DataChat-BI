@@ -138,7 +138,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > 3. Dependency Injection: Padrão do FastAPI para gerenciar recursos (como conexões) de forma segura.
 
 > [!NOTE]
-> Para acessar a documentação dos endpoints acesse:
+> Para a documentação dos endpoints acesse:
 > [ENDPOINTS](ENDPOINTS.md)
 
 ---
@@ -179,4 +179,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > - Responsabilidade: Formatar a resposta final para o usuário.
 > - Ação: Transforma o resultado bruto do banco de dados em uma resposta amigável,seja em texto ou em um JSON estruturado para gráficos.
 > 
-> Este design modular torna o sistema mais robusto, previsível e fácil de depurar.
+
+> [!NOTE]
+> Para a explicação do fluxo acesse:
+> [FLUXO](FLUXO_CHAIN.md)
