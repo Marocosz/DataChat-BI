@@ -24,6 +24,11 @@
   - [`frontend/src/pages/Chat.js`](#frontendsrcpageschatjs)
   - [`frontend/src/pages/Dashboard.js`](#frontendsrcpagesdashboardjs)
   - [`frontend/src/App.js`](#frontendsrcappjs)
+- [🏗️ Estrutura do Banco de Dados](#️-estrutura-do-banco-de-dados)
+  - [Diagrama de Entidade-Relacionamento (ERD)](#diagrama-de-entidade-relacionamento-erd)
+  - [Detalhamento das Tabelas](#detalhamento-das-tabelas)
+    - [Tabela: clientes](#tabela-clientes)
+    - [Tabela: operacoes\_logisticas](#tabela-operacoes_logisticas)
 
 ---
 
@@ -139,7 +144,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 
 ---
 
-## `backend/app/api/dashboard.py`
+## [`backend/app/api/dashboard.py`](./backend/app/api/dashboard.py)
 
 > API ROUTER PARA O DASHBOARD Padrões de arquitetura aplicados:
 > 1. Connection Pooling: Para reutilizar conexões com o banco de dados e melhorar a performance.
@@ -152,7 +157,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 
 ---
 
-## `backend/app/chains/sql_rag_chain.py`
+## [`backend/app/chains/sql_rag_chain.py`](./backend/app/chains/sql_rag_chain.py)
 
 > PROMPT ENGINEERING HUB - O CÉREBRO DA APLICAÇÃO
 > 
@@ -192,7 +197,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > [FLUXO](FLUXO_CHAIN.md)
 
 
-## `backend/app/core/config.py`
+## [`backend/app/core/config.py`](./backend/app/core/config.py)
 
 > ARQUIVO DE CONFIGURAÇÃO CENTRALIZADA (SETTINGS)
 >
@@ -206,7 +211,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > evitando erros em outras partes do sistema.
 
 
-## `backend/app/core/database.py`
+## [`backend/app/core/database.py`](./backend/app/core/database.py)
 
 > ARQUIVO DE GERENCIAMENTO DO BANCO DE DADOS
 >
@@ -217,7 +222,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >    enviada como CONTEXTO para o LLM, evitando erros de requisição muito grande.
 
 
-## `backend/app/core/llm.py`
+## [`backend/app/core/llm.py`](./backend/app/core/llm.py)
 
 > ARQUIVO DE CRIAÇÃO DOS LLMs (FÁBRICA DE MODELOS)
 >
@@ -226,7 +231,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > lugares, criamos funções "fábrica" que retornam um modelo já configurado.
 
 
-## `backend/app/prompts/sql_prompts.py`
+## [`backend/app/prompts/sql_prompts.py`](./backend/app/prompts/sql_prompts.py)
 
 > PROMPT ENGINEERING HUB - O CÉREBRO DA APLICAÇÃO
 >
@@ -265,7 +270,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >
 > Este design modular torna o sistema mais robusto, previsível e fácil de depurar.
 
-## `frontend/src/components/ChartComponent.js`
+## [`frontend/src/components/ChartComponent.js`](./frontend/src/components/ChartComponent.js)
 
 > COMPONENTE DE VISUALIZAÇÃO DE GRÁFICOS
 >
@@ -296,7 +301,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >    todos os gráficos, garantindo uma identidade visual coesa.
 
 
-## `frontend/src/components/ChatMessage.js`
+## [`frontend/src/components/ChatMessage.js`](./frontend/src/components/ChatMessage.js)
 
 > COMPONENTE DE EXIBIÇÃO DE MENSAGEM DO CHAT
 >
@@ -325,7 +330,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >    do visualizador da query SQL, mantendo o estado de cada mensagem de forma independente.
 
 
-## `frontend/src/pages/Chat.js`
+## [`frontend/src/pages/Chat.js`](./frontend/src/pages/Chat.js)
 
 > COMPONENTE DA PÁGINA PRINCIPAL DE CHAT
 >
@@ -358,7 +363,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >    - Mapeia o array de `messages` para renderizar uma lista de componentes `ChatMessage`.
 >    - Exibe o formulário de entrada de texto e o botão de envio.
 
-## `frontend/src/pages/Dashboard.js`
+## [`frontend/src/pages/Dashboard.js`](./frontend/src/pages/Dashboard.js)
 
 > COMPONENTE DA PÁGINA DO DASHBOARD
 >
@@ -386,7 +391,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 >    - Monta o layout completo da página, incluindo o cabeçalho, a grade de KPIs e
 >      múltiplas instâncias do `ChartWrapper` para renderizar cada gráfico específico.
 
-## `frontend/src/App.js`
+## [`frontend/src/App.js`](./frontend/src/App.js)
 
 > COMPONENTE RAIZ E ROTEADOR DA APLICAÇÃO
 >
@@ -408,3 +413,76 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > 3. Mapeamento de Rotas: Define quais componentes de página (`Dashboard`, `Chat`) devem
 >    ser renderizados com base na URL atual do navegador. Por exemplo, a URL "/" renderiza
 >    o Dashboard, enquanto "/chat" renderiza a página de Chat.
+
+
+# 🏗️ Estrutura do Banco de Dados
+
+Esta seção detalha o esquema do banco de dados PostgreSQL utilizado para os testes e demonstrações do **SUPPBOT BI**. O modelo foi projetado para simular um ambiente de logística real, com tabelas para clientes e suas respectivas operações.
+
+## Diagrama de Entidade-Relacionamento (ERD)
+
+> O diagrama abaixo ilustra as tabelas principais e o relacionamento entre elas. A relação fundamental é que um cliente pode ter múltiplas operações logísticas.
+
+```mermaid
+erDiagram
+    clientes {
+        int id PK "ID único do cliente (Chave Primária)"
+        varchar nome_razao_social "Nome ou Razão Social do cliente"
+        varchar cnpj_cpf "CNPJ ou CPF do cliente"
+        varchar email_contato "Email principal para contato"
+        varchar telefone_contato "Telefone principal para contato"
+        timestamp data_cadastro "Data e hora do cadastro do cliente"
+    }
+    operacoes_logisticas {
+        int id PK "ID único da operação (Chave Primária)"
+        varchar codigo_rastreio "Código de Rastreio único da operação"
+        varchar tipo "Tipo da operação (ex: TRANSPORTE, ARMAZENAGEM)"
+        varchar status "Status atual da operação (ex: EM_TRANSITO, ENTREGUE)"
+        varchar natureza_carga "Descrição da carga (ex: Eletrônicos, Têxteis)"
+        numeric valor_mercadoria "Valor monetário da mercadoria transportada"
+        numeric valor_frete "Custo do frete da operação"
+        numeric peso_kg "Peso total da carga em quilogramas"
+        varchar uf_destino "Sigla da Unidade Federativa de destino"
+        timestamp data_emissao "Data e hora de emissão da operação"
+        timestamp data_entrega_realizada "Data e hora da conclusão da entrega"
+        int cliente_id FK "ID do cliente associado (Chave Estrangeira)"
+    }
+
+    clientes ||--o{ operacoes_logisticas : "realiza"
+```
+
+## Detalhamento das Tabelas
+
+### Tabela: clientes
+
+> Armazena as informações cadastrais de cada cliente.
+
+| Coluna             | Tipo de Dado         | Descrição                                                      |
+|--------------------|----------------------|----------------------------------------------------------------|
+| id                 | SERIAL PRIMARY KEY   | Identificador único e sequencial para cada cliente.             |
+| nome_razao_social  | VARCHAR(255)         | Nome completo ou Razão Social do cliente.                       |
+| cnpj_cpf           | VARCHAR(20)          | CNPJ (para empresas) ou CPF (para pessoas físicas).             |
+| email_contato      | VARCHAR(255)         | Endereço de e-mail principal para contato.                      |
+| telefone_contato   | VARCHAR(20)          | Número de telefone para contato.                                |
+| data_cadastro      | TIMESTAMP            | Data e hora em que o cliente foi cadastrado.                    |
+
+---
+
+### Tabela: operacoes_logisticas
+
+> Registra cada operação logística realizada, contendo todos os seus detalhes e status.
+
+| Coluna                | Tipo de Dado        | Descrição                                                                 |
+|-----------------------|---------------------|---------------------------------------------------------------------------|
+| id                    | SERIAL PRIMARY KEY  | Identificador único para cada operação.                                   |
+| codigo_rastreio       | VARCHAR(50)         | Código alfanumérico usado para rastrear a operação.                       |
+| tipo                  | VARCHAR(50)         | Define o tipo da operação (ex: 'TRANSPORTE', 'ARMAZENAGEM').              |
+| status                | VARCHAR(50)         | O estado atual da operação (ex: 'SOLICITADO', 'EM_TRANSITO', 'ENTREGUE'). |
+| natureza_carga        | VARCHAR(100)        | Descreve o tipo de mercadoria (ex: 'Alimentos', 'Eletrônicos').           |
+| valor_mercadoria      | NUMERIC(12, 2)      | O valor declarado da mercadoria.                                          |
+| valor_frete           | NUMERIC(10, 2)      | O custo do serviço de frete.                                              |
+| peso_kg               | NUMERIC(10, 2)      | O peso total da carga em quilogramas.                                     |
+| uf_destino            | VARCHAR(2)          | A sigla do estado de destino da operação.                                 |
+| data_emissao          | TIMESTAMP           | Data e hora em que a operação foi criada no sistema.                      |
+| data_entrega_realizada| TIMESTAMP           | Data e hora em que a entrega foi oficialmente concluída (pode ser nulo).  |
+| cliente_id            | INTEGER             | Chave estrangeira que referencia a coluna id da tabela clientes.          |
