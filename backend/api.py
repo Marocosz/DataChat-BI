@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 # Cria a instância principal da aplicação FastAPI com metadados para a documentação automática.
 app = FastAPI(
-    title="SuppBot RAG API",
+    title="DataChat RAG API",
     description="API para interagir com o chatbot de logística",
     version="1.0.0"
 )
@@ -143,4 +143,4 @@ def read_root():
     Endpoint de "health check" para verificar de forma simples se a API está no ar.
     Útil para monitoramento e testes de deploy.
     """
-    return {"status": "SuppBot API is running"}
+    return {"status": "DataChat API is running"}

@@ -163,7 +163,7 @@ def create_master_chain() -> Runnable:
     # Define a cadeia para conversas simples que não acessam o banco de dados.
     simple_chat_prompt_with_history = ChatPromptTemplate.from_messages([
         MessagesPlaceholder(variable_name="chat_history"),
-        ("user", "Você é um assistente amigável chamado SuppBot. Responda de forma concisa e útil.")
+        ("user", "Você é um assistente amigável chamado DataChat. Responda de forma concisa e útil.")
     ])
     simple_chat_chain = (
         simple_chat_prompt_with_history

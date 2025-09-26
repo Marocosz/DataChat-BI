@@ -1,9 +1,9 @@
-# 🤖 SuppBot - BI
+# 🤖 DataChat - BI
 
-> SUPPBOT BI é uma solução de Business Intelligence conversacional para logística, baseada em IA generativa e RAG (Retrieval-Augmented Generation). O sistema utiliza LLMs para interpretar perguntas em linguagem natural, gerar consultas SQL dinâmicas e entregar respostas precisas e contextualizadas, incluindo gráficos e KPIs. Com arquitetura modular de prompts e memória de conversa, SUPPBOT BI oferece uma interface inteligente para análise avançada de dados logísticos via dashboard e principalmente chatbot.
+> DataChat BI é uma solução de Business Intelligence conversacional para logística, baseada em IA generativa e RAG (Retrieval-Augmented Generation). O sistema utiliza LLMs para interpretar perguntas em linguagem natural, gerar consultas SQL dinâmicas e entregar respostas precisas e contextualizadas, incluindo gráficos e KPIs. Com arquitetura modular de prompts e memória de conversa, DataChat BI oferece uma interface inteligente para análise avançada de dados logísticos via dashboard e principalmente chatbot.
 
 # 🗂️ Índice
-- [🤖 SuppBot - BI](#-suppbot---bi)
+- [🤖 DataChat - BI](#-DataChat---bi)
 - [🗂️ Índice](#️-índice)
 - [🛠️ Tecnologias Usadas](#️-tecnologias-usadas)
   - [**Geral**](#geral)
@@ -138,15 +138,15 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 
 | Versão | Data       | Mudanças principais               |
 |--------|------------|-----------------------------------|
-| 1.0    | 25/09/2025 | MVP funcional do SUPPBOT BI       |
+| 1.0    | 25/09/2025 | MVP funcional do DataChat BI       |
 
 ---
 
 # 🧠 Funcionamento
 
-Nesta seção, apresentamos uma visão detalhada de como cada parte do SUPPBOT BI opera, do frontend ao backend. Aqui você encontrará uma explicação clara de como os componentes, scripts e módulos interagem entre si, como os dados fluem do usuário até o banco de dados e de volta, e como a inteligência artificial é utilizada para processar perguntas, gerar consultas SQL e exibir respostas e gráficos.  
+Nesta seção, apresentamos uma visão detalhada de como cada parte do DataChat BI opera, do frontend ao backend. Aqui você encontrará uma explicação clara de como os componentes, scripts e módulos interagem entre si, como os dados fluem do usuário até o banco de dados e de volta, e como a inteligência artificial é utilizada para processar perguntas, gerar consultas SQL e exibir respostas e gráficos.  
 
-O objetivo é fornecer ao leitor uma compreensão completa do funcionamento interno do sistema, permitindo não apenas usar o SUPPBOT BI, mas também entender, manter e expandir seu código com facilidade.
+O objetivo é fornecer ao leitor uma compreensão completa do funcionamento interno do sistema, permitindo não apenas usar o DataChat BI, mas também entender, manter e expandir seu código com facilidade.
 
 ---
 
@@ -426,7 +426,7 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 
 # 🎯 Aplicabilidade
 
-O **SUPPBOT BI** foi projetado para transformar a maneira como equipes de logística interagem com seus dados, substituindo planilhas complexas e relatórios estáticos por uma plataforma de Business Intelligence dinâmica e intuitiva. A solução atende a diferentes níveis da operação, desde analistas que precisam de respostas rápidas até gestores que necessitam de uma visão estratégica.
+O **DataChat BI** foi projetado para transformar a maneira como equipes de logística interagem com seus dados, substituindo planilhas complexas e relatórios estáticos por uma plataforma de Business Intelligence dinâmica e intuitiva. A solução atende a diferentes níveis da operação, desde analistas que precisam de respostas rápidas até gestores que necessitam de uma visão estratégica.
 
 A aplicabilidade se divide em duas interfaces principais:
 
@@ -447,7 +447,7 @@ O coração do projeto é um chatbot inteligente que permite a qualquer membro d
 > [!TIP]
 > Para uma lista exaustiva com dezenas de exemplos de perguntas, desde as mais simples até as mais complexas, consulte nosso roteiro de testes detalhado no arquivo: [`backend/testes.txt`](./backend/testes.txt).
 
-![Interface do Chatbot do SuppBot BI](./tela_chat.png)
+![Interface do Chatbot do DataChat BI](./tela_chat.png)
 *Interface do Chatbot, capaz de responder com texto e gerar gráficos dinâmicos.*
 
 ---
@@ -463,7 +463,7 @@ Para uma visão macro e de alto nível, o Dashboard oferece um painel consolidad
     * Valor total das mercadorias sob responsabilidade da empresa.
 * **Equipe de Vendas ou Contas:** Pode identificar rapidamente os clientes mais valiosos ou com maior volume de operações para focar em ações de relacionamento.
 
-![Dashboard de Logística do SuppBot BI](./tela_dashboard.png)
+![Dashboard de Logística do DataChat BI](./tela_dashboard.png)
 *Visão geral do Dashboard, com KPIs e gráficos pré-configurados para análise estratégica.*
 
 > [!IMPORTANT]
@@ -479,7 +479,7 @@ Para uma visão macro e de alto nível, o Dashboard oferece um painel consolidad
 
 # 🏗️ Estrutura do Banco de Dados
 
-Esta seção detalha o esquema do banco de dados PostgreSQL utilizado para os testes e demonstrações do **SUPPBOT BI**. O modelo foi projetado para simular um ambiente de logística real, com tabelas para clientes e suas respectivas operações.
+Esta seção detalha o esquema do banco de dados PostgreSQL utilizado para os testes e demonstrações do **DataChat BI**. O modelo foi projetado para simular um ambiente de logística real, com tabelas para clientes e suas respectivas operações.
 
 ## Diagrama de Entidade-Relacionamento (ERD)
 
@@ -552,7 +552,7 @@ erDiagram
 
 # 🤝 Agradecimentos e Contato
 
-Agradeço imensamente pelo seu interesse no **SUPPBOT BI**! Este projeto foi uma jornada de aprendizado e desenvolvimento, e fico feliz em compartilhá-lo com a comunidade.
+Agradeço imensamente pelo seu interesse no **DataChat BI**! Este projeto foi uma jornada de aprendizado e desenvolvimento, e fico feliz em compartilhá-lo com a comunidade.
 
 Um agradecimento especial a todas as fantásticas tecnologias e comunidades open-source que tornaram este projeto possível, especialmente às equipes por trás do React, FastAPI, LangChain e PostgreSQL.
 

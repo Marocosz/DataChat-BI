@@ -9,7 +9,7 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar-brand">
         <FiDatabase className="brand-icon" />
-        <h1>SuppBot BI</h1>
+        <h1>DataChat BI</h1>
       </div>
       <div className="navbar-links">
         <NavLink to="/">Dashboard</NavLink>

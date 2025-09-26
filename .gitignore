@@ -10,7 +10,7 @@ __pycache__/
 # Ambientes Virtuais
 # ----------------------------------------------------------------
 # Ignora a pasta do nosso ambiente virtual na raiz do projeto
-/venvsuppbot/
+/venvDataChat/
 
 # ----------------------------------------------------------------
 # Arquivos de Configuração e Chaves Sensíveis
