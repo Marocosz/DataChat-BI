@@ -15,6 +15,10 @@
 - [Funcionamento](#funcionamento)
   - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
   - [`backend/app/chains/sql_rag_chain.py`](#backendappchainssql_rag_chainpy)
+  - [`backend/app/core/config.py`](#backendappcoreconfigpy)
+  - [`backend/app/core/database.py`](#backendappcoredatabasepy)
+  - [`backend/app/core/llm.py`](#backendappcorellmpy)
+  - [`backend/app/prompts/sql_prompts.py`](#backendapppromptssql_promptspy)
 
 ---
 
@@ -147,15 +151,13 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 
 > PROMPT ENGINEERING HUB - O CÉREBRO DA APLICAÇÃO
 > 
-> ---
 > Propósito do Arquivo:
 > 
 > Este arquivo é o centro de controle da inteligência artificial do sistema. Ele centraliza
 > todas as instruções (prompts) que definem as "personalidades" e "habilidades" de cada
 > componente de IA, garantindo que a lógica conversacional seja clara, manutenível e
 > fácil de aprimorar.
-> 
-> ---
+>
 > Arquitetura e Princípio de Design:
 >
 > A arquitetura segue o princípio de "Separação de Responsabilidades", onde cada tarefa
@@ -183,3 +185,77 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > [!NOTE]
 > Para a explicação do fluxo acesse:
 > [FLUXO](FLUXO_CHAIN.md)
+
+
+## `backend/app/core/config.py`
+
+> ARQUIVO DE CONFIGURAÇÃO CENTRALIZADA (SETTINGS)
+>
+> Este arquivo funciona como o "painel de controle" da nossa aplicação.
+> Ele é responsável por carregar, validar e centralizar todas as 
+> configurações externas, como chaves de API e credenciais de banco de dados,
+> a partir do arquivo .env.
+>
+> Usamos a biblioteca Pydantic para garantir que as configurações não apenas
+> sejam carregadas, mas também que tenham o tipo de dado correto (texto, número, etc.),
+> evitando erros em outras partes do sistema.
+
+
+## `backend/app/core/database.py`
+
+> ARQUIVO DE GERENCIAMENTO DO BANCO DE DADOS
+>
+> Este módulo centraliza toda a interação com o banco de dados PostgreSQL.
+> Ele é responsável por:
+> 1. Criar uma instância de conexão que o LangChain pode usar para EXECUTAR queries.
+> 2. Gerar uma representação de texto compacta do schema do banco para ser
+>    enviada como CONTEXTO para o LLM, evitando erros de requisição muito grande.
+
+
+## `backend/app/core/llm.py`
+
+> ARQUIVO DE CRIAÇÃO DOS LLMs (FÁBRICA DE MODELOS)
+>
+> O propósito deste arquivo é centralizar e abstrair a criação das instâncias
+> dos modelos de linguagem (LLMs). Ao invés de configurar o ChatGroq em vários
+> lugares, criamos funções "fábrica" que retornam um modelo já configurado.
+
+
+## `backend/app/prompts/sql_prompts.py`
+
+> PROMPT ENGINEERING HUB - O CÉREBRO DA APLICAÇÃO
+>
+> Propósito do Arquivo:
+> 
+> Este arquivo é o centro de controle da inteligência artificial do sistema. Ele centraliza
+> todas as instruções (prompts) que definem as "personalidades" e "habilidades" de cada
+> componente de IA, garantindo que a lógica conversacional seja clara, manutenível e
+> fácil de aprimorar.
+>
+> Arquitetura e Princípio de Design:
+>
+> A arquitetura segue o princípio de "Separação de Responsabilidades", onde cada tarefa
+> complexa é dividida entre múltiplos "especialistas" de IA que operam em sequência,
+> como uma linha de montagem:
+>
+> 1. O Porteiro (`ROUTER_PROMPT`):
+>    - Responsabilidade: Classificar a intenção do usuário.
+>    - Ação: Decide se a pergunta é uma conversa casual ou uma consulta ao banco,
+>      direcionando-a para o caminho correto.
+>
+> 2. O Especialista em Contexto (`REPHRASER_PROMPT`):
+>    - Responsabilidade: Resolver ambiguidades e contexto.
+>    - Ação: Pega perguntas de acompanhamento (ex: "e para ele?") e as reescreve
+>      como perguntas completas e autônomas, usando o histórico do chat.
+>
+> 3. O Engenheiro SQL (`SQL_PROMPT`):
+>    - Responsabilidade: Traduzir linguagem natural para SQL.
+>    - Ação: Recebe a pergunta já clara do Especialista em Contexto e a converte em
+>      uma query PostgreSQL precisa, aprendendo com os exemplos fornecidos.
+>
+> 4. O Analista de Dados (`FINAL_ANSWER_PROMPT`):
+>    - Responsabilidade: Formatar a resposta final para o usuário.
+>    - Ação: Transforma o resultado bruto do banco de dados em uma resposta amigável,
+>      seja em texto ou em um JSON estruturado para gráficos.
+>
+> Este design modular torna o sistema mais robusto, previsível e fácil de depurar.
