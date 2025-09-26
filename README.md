@@ -144,3 +144,45 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 ---
 
 ## `backend/app/chains/sql_rag_chain.py`
+
+> =================================================================================================
+> =================================================================================================
+> 
+> PROMPT ENGINEERING HUB - O CÉREBRO DA APLICAÇÃO
+> 
+> -------------------------------------------------------------------------------------------------
+> Propósito do Arquivo:
+> -------------------------------------------------------------------------------------------------
+> Este arquivo é o centro de controle da inteligência artificial do sistema. Ele centraliza
+> todas as instruções (prompts) que definem as "personalidades" e "habilidades" de cada
+> componente de IA, garantindo que a lógica conversacional seja clara, manutenível e
+> fácil de aprimorar.
+-
+> -------------------------------------------------------------------------------------------------
+> Arquitetura e Princípio de Design:
+> -------------------------------------------------------------------------------------------------
+> A arquitetura segue o princípio de "Separação de Responsabilidades", onde cada tarefa
+> complexa é dividida entre múltiplos "especialistas" de IA que operam em sequência,
+> como uma linha de montagem:
+-
+> 1. O Porteiro (ROUTER_PROMPT):
+> - Responsabilidade: Classificar a intenção do usuário.
+> - Ação: Decide se a pergunta é uma conversa casual ou uma consulta ao banco, direcionando-a para o caminho correto.
+> 
+> 2. O Especialista em Contexto (REPHRASER_PROMPT):
+> - Responsabilidade: Resolver ambiguidades e contexto.
+> - Ação: Pega perguntas de acompanhamento (ex: "e para ele?") e as reescreve
+> como perguntas completas e autônomas, usando o histórico do chat.
+> 
+> 3. O Engenheiro SQL (SQL_PROMPT):
+> - Responsabilidade: Traduzir linguagem natural para SQL.
+> - Ação: Recebe a pergunta já clara do Especialista em Contexto e a converte emuma query PostgreSQL precisa, aprendendo com os exemplos fornecidos.
+> 
+> 4. O Analista de Dados (FINAL_ANSWER_PROMPT):
+> - Responsabilidade: Formatar a resposta final para o usuário.
+> - Ação: Transforma o resultado bruto do banco de dados em uma resposta amigável,seja em texto ou em um JSON estruturado para gráficos.
+> 
+> Este design modular torna o sistema mais robusto, previsível e fácil de depurar.
+> 
+> =================================================================================================
+> =================================================================================================

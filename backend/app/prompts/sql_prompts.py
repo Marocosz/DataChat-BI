@@ -1,30 +1,44 @@
 # =================================================================================================
 # =================================================================================================
 #
-#                 ARQUIVO DE PROMPTS - O CÉREBRO CONVERSACIONAL DA APLICAÇÃO
+#                     PROMPT ENGINEERING HUB - O CÉREBRO DA APLICAÇÃO
 #
-# Visão Geral da Arquitetura de Prompts:
+# -------------------------------------------------------------------------------------------------
+# Propósito do Arquivo:
+# -------------------------------------------------------------------------------------------------
+# Este arquivo é o centro de controle da inteligência artificial do sistema. Ele centraliza
+# todas as instruções (prompts) que definem as "personalidades" e "habilidades" de cada
+# componente de IA, garantindo que a lógica conversacional seja clara, manutenível e
+# fácil de aprimorar.
 #
-# Este arquivo define o comportamento da inteligência artificial através de uma série de "prompts"
-# especializados, que funcionam como uma linha de montagem para processar a pergunta do usuário:
+# -------------------------------------------------------------------------------------------------
+# Arquitetura e Princípio de Design:
+# -------------------------------------------------------------------------------------------------
+# A arquitetura segue o princípio de "Separação de Responsabilidades", onde cada tarefa
+# complexa é dividida entre múltiplos "especialistas" de IA que operam em sequência,
+# como uma linha de montagem:
 #
-# 1. ROUTER_PROMPT (O Porteiro):
-#    - Classifica a pergunta do usuário para decidir se é uma conversa simples ou uma
-#      consulta ao banco de dados, direcionando para o especialista correto.
+# 1. O Porteiro (`ROUTER_PROMPT`):
+#    - Responsabilidade: Classificar a intenção do usuário.
+#    - Ação: Decide se a pergunta é uma conversa casual ou uma consulta ao banco,
+#      direcionando-a para o caminho correto.
 #
-# 2. REPHRASER_PROMPT (O Especialista em Contexto):
-#    - Se for uma consulta, este prompt reescreve perguntas ambíguas ou de acompanhamento
-#      (ex: "e para ele?") em uma pergunta completa e autônoma, usando o histórico do chat.
+# 2. O Especialista em Contexto (`REPHRASER_PROMPT`):
+#    - Responsabilidade: Resolver ambiguidades e contexto.
+#    - Ação: Pega perguntas de acompanhamento (ex: "e para ele?") e as reescreve
+#      como perguntas completas e autônomas, usando o histórico do chat.
 #
-# 3. SQL_PROMPT (O Engenheiro de Banco de Dados):
-#    - Recebe a pergunta já clara do Rephraser e a traduz em uma query SQL precisa,
-#      usando exemplos de "Few-Shot Learning" para garantir a sintaxe correta.
+# 3. O Engenheiro SQL (`SQL_PROMPT`):
+#    - Responsabilidade: Traduzir linguagem natural para SQL.
+#    - Ação: Recebe a pergunta já clara do Especialista em Contexto e a converte em
+#      uma query PostgreSQL precisa, aprendendo com os exemplos fornecidos.
 #
-# 4. FINAL_ANSWER_PROMPT (O Analista de Dados e Comunicador):
-#    - Pega o resultado bruto da query SQL e o transforma em uma resposta amigável para o
-#      usuário, decidindo entre um texto simples ou um gráfico e formatando a saída em JSON.
+# 4. O Analista de Dados (`FINAL_ANSWER_PROMPT`):
+#    - Responsabilidade: Formatar a resposta final para o usuário.
+#    - Ação: Transforma o resultado bruto do banco de dados em uma resposta amigável,
+#      seja em texto ou em um JSON estruturado para gráficos.
 #
-# Cada prompt é um especialista em sua própria tarefa, tornando o sistema modular e robusto.
+# Este design modular torna o sistema mais robusto, previsível e fácil de depurar.
 #
 # =================================================================================================
 # =================================================================================================
@@ -209,6 +223,7 @@ SAÍDA GERADA PELO LLM (Exemplo 2):
 # Define as instruções para o LLM classificador de intenção.
 # Sua única função é decidir se a pergunta do usuário é uma conversa casual
 # ou se ela precisa ser enviada para a complexa cadeia de consulta ao banco de dados.
+
 ROUTER_PROMPT = PromptTemplate.from_template(
     """
     Sua tarefa é classificar o texto do usuário em uma das duas categorias. Responda APENAS com o nome da categoria.
