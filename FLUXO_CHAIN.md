@@ -162,3 +162,160 @@ WHERE c.nome_razao_social = 'Pimenta';
 - O ciclo se completa como antes, e o frontend recebe a resposta correta para a pergunta de acompanhamento.
 
 ---
+---
+
+# Análise Detalhada das Funções
+
+O arquivo é dividido em duas partes: as funções de alto nível que gerenciam o estado da sessão e a grande função `create_master_chain()` que constrói toda a lógica e contém suas próprias funções auxiliares.
+
+---
+
+## Funções de Gerenciamento de Sessão
+
+Estas são as funções que interagem com o dicionário **store** para dar memória à aplicação.
+
+### 1. `get_session_data(session_id: str) -> dict`
+**Propósito:** É a porta de entrada para o store. Garante que sempre haja um registro para uma sessão, criando um novo se for a primeira vez que o ID aparece.
+
+**Entrada:**
+- `session_id (str)`: O identificador único da sessão, vindo do frontend.
+
+**Lógica Principal:**
+- Verifica se a `session_id` já existe como uma chave no dicionário **store**.
+- Se não existir, cria uma nova entrada no store para esse ID.  
+  A nova entrada é um dicionário contendo um `ChatMessageHistory()` vazio e um valor padrão para `last_sql`.
+- Se já existir, não faz nada.
+
+**Saída:**
+- `dict`: Retorna o dicionário completo da sessão (`{"history": ..., "last_sql": ...}`).
+
+---
+
+### 2. `get_session_history(session_id: str) -> ChatMessageHistory`
+**Propósito:** Função específica para o LangChain. O `RunnableWithMessageHistory` a utiliza para carregar o histórico de mensagens de uma sessão no início de cada turno.
+
+**Entrada:**
+- `session_id (str)`: O identificador da sessão.
+
+**Lógica Principal:**
+- Chama `get_session_data()` para garantir que a sessão exista.
+- Acessa o dicionário da sessão e retorna apenas o valor da chave `"history"`.
+
+**Saída:**
+- `ChatMessageHistory`: O objeto que contém a lista de mensagens daquela conversa.
+
+---
+
+### 3. `update_last_sql(session_id: str, sql: str)`
+**Propósito:** Salvar a última query SQL bem-sucedida na memória de "trabalho" de uma sessão.
+
+**Entrada:**
+- `session_id (str)`: O identificador da sessão.
+- `sql (str)`: A string da query SQL que foi gerada e executada.
+
+**Lógica Principal:**
+- Verifica se a sessão existe no **store**.
+- Verifica se a string `sql` não é vazia e não contém uma mensagem de erro.
+- Se as condições forem atendidas, atualiza o valor da chave `"last_sql"` no dicionário da sessão.
+
+**Saída:**
+- Nenhuma (a função modifica o **store** diretamente, um efeito colateral).
+
+---
+
+## Função Principal de Construção: `create_master_chain()`
+
+Esta função gigante é uma "fábrica" que constrói e conecta todos os componentes da linha de montagem.
+
+**Propósito:** Orquestrar a criação de todas as sub-cadeias (router, rephraser, sql, etc.) e conectá-las em uma `Runnable` principal e com memória.
+
+**Entrada:** Nenhuma.
+
+**Saída:**
+- `Runnable`: A cadeia completa e pronta para uso (`chain_with_memory`), que a API irá invocar.
+
+---
+
+## Funções Auxiliares (Definidas Dentro de `create_master_chain`)
+
+Estas funções são definidas localmente dentro de `create_master_chain` e usadas como "ferramentas" na construção da linha de montagem.
+
+### 4. `trim_history(data)`
+**Propósito:** Manter o histórico da conversa com um tamanho fixo para evitar exceder o limite de tokens dos LLMs.
+
+**Entrada:**
+- `data (dict)`: O dicionário de dados que flui pela cadeia, que contém a chave `"chat_history"`.
+
+**Lógica Principal:**
+- Pega a lista de mensagens do `"chat_history"`.
+- Se a lista tiver mais de `k (6)` mensagens, ela a "fatia", mantendo apenas as últimas 6.
+
+**Saída:**
+- `dict`: O mesmo dicionário `data`, mas com a chave `"chat_history"` potencialmente encurtada.
+
+---
+
+### 5. `execute_sql_query(query: str) -> str`
+**Propósito:** Executar de forma segura uma query SQL no banco de dados, atuando como uma camada de proteção.
+
+**Entrada:**
+- `query (str)`: A query SQL gerada pelo LLM.
+
+**Lógica Principal:**
+- **Segurança:** Adiciona `LIMIT 100` a queries `SELECT` que não sejam de agregação para prevenir a busca de dados em massa.
+- **Execução:** Usa `db_instance.run(query)` para executar a query no banco.
+- **Tratamento de Vazio:** Se o resultado for vazio (`[]`), retorna a string padronizada `"RESULTADO_VAZIO: ..."`.
+- **Tratamento de Erro:** Se a execução da query falhar, o bloco `except` captura o erro e retorna a string `"ERRO_DB: ..."`.
+
+**Saída:**
+- `str`: Uma string contendo o resultado do banco, ou uma das mensagens de estado (vazio/erro).
+
+---
+
+### 6. `format_simple_chat_output(text_content: str) -> dict`
+**Propósito:** Padronizar a saída da cadeia de conversa simples para que ela tenha a mesma estrutura JSON da cadeia SQL.
+
+**Entrada:**
+- `text_content (str)`: O texto puro gerado pelo LLM na conversa simples.
+
+**Saída:**
+- `dict`: Um dicionário no formato `{"type": "text", "content": ..., "generated_sql": "..."}`.
+
+---
+
+### 7. `execute_and_log_query(data: dict) -> str`
+**Propósito:** Uma pequena função "wrapper" que conecta a `execute_sql_query` à cadeia e adiciona um log extra.
+
+**Entrada:**
+- `data (dict)`: O dicionário da cadeia, que deve conter a chave `"generated_sql"`.
+
+**Saída:**
+- `str`: O resultado da execução da query (o mesmo que a saída da `execute_sql_query`).
+
+---
+
+### 8. `combine_sql_with_response(data: dict) -> dict`
+**Propósito:** Juntar a resposta final (o JSON do `final_response_chain`) com a query SQL gerada, criando o objeto JSON completo que será enviado ao frontend.
+
+**Entrada:**
+- `data (dict)`: O dicionário da cadeia, contendo `"final_response_json"` e `"generated_sql"`.
+
+**Saída:**
+- `dict`: O mesmo dicionário de `final_response_json`, mas agora com a chave `"generated_sql"` adicionada.
+
+---
+
+### 9. `format_final_output(chain_output: dict) -> dict`
+**Propósito:** Preparar o pacote final de saída da cadeia, criando duas versões da resposta.
+
+**Entrada:**
+- `chain_output (dict)`: O dicionário final produzido por qualquer um dos ramos (`simple_chat_chain` ou `sql_chain`).
+
+**Lógica Principal:**
+- Cria uma versão em texto puro da resposta.  
+- Se for um gráfico, cria um texto descritivo (ex: `"Gerei um gráfico para você..."`).
+
+**Saída:**
+- `dict`: Um novo dicionário com duas chaves:
+  - `"api_response"`: O dicionário JSON completo para o frontend.
+  - `"history_message"`: A versão em texto simplificada, que será salva no histórico da conversa.
