@@ -2,9 +2,9 @@
 
 > DataChat BI é uma solução de Business Intelligence conversacional para logística, baseada em IA generativa e RAG (Retrieval-Augmented Generation). O sistema utiliza LLMs para interpretar perguntas em linguagem natural, gerar consultas SQL dinâmicas e entregar respostas precisas e contextualizadas, incluindo gráficos e KPIs. Com arquitetura modular de prompts e memória de conversa, DataChat BI oferece uma interface inteligente para análise avançada de dados logísticos via dashboard e principalmente chatbot.
 
-# 🗂️ Índice
-- [🤖 DataChat - BI](#-DataChat---bi)
-- [🗂️ Índice](#️-índice)
+# 🗂️ Índicez
+- [🤖 DataChat - BI](#-datachat---bi)
+- [🗂️ Índicez](#️-índicez)
 - [🛠️ Tecnologias Usadas](#️-tecnologias-usadas)
   - [**Geral**](#geral)
   - [**Frontend**](#frontend)
@@ -12,6 +12,7 @@
   - [Modelos LLM:](#modelos-llm)
 - [🌳 Estrutura do Projeto](#-estrutura-do-projeto)
 - [🔄 Updates](#-updates)
+  - [Próximas Implementações](#próximas-implementações)
 - [🧠 Funcionamento](#-funcionamento)
   - [`backend/app/api/dashboard.py`](#backendappapidashboardpy)
   - [`backend/app/chains/sql_rag_chain.py`](#backendappchainssql_rag_chainpy)
@@ -25,8 +26,8 @@
   - [`frontend/src/pages/Dashboard.js`](#frontendsrcpagesdashboardjs)
   - [`frontend/src/App.js`](#frontendsrcappjs)
 - [🎯 Aplicabilidade](#-aplicabilidade)
-  - [1. Análise Conversacional em Tempo Real via Chatbot](#1-análise-conversacional-em-tempo-real-via-chatbot)
-  - [2. Monitoramento Estratégico com o Dashboard](#2-monitoramento-estratégico-com-o-dashboard)
+  - [Análise Conversacional em Tempo Real via Chatbot](#análise-conversacional-em-tempo-real-via-chatbot)
+  - [Monitoramento Estratégico com o Dashboard](#monitoramento-estratégico-com-o-dashboard)
 - [🏗️ Estrutura do Banco de Dados](#️-estrutura-do-banco-de-dados)
   - [Diagrama de Entidade-Relacionamento (ERD)](#diagrama-de-entidade-relacionamento-erd)
   - [Detalhamento das Tabelas](#detalhamento-das-tabelas)
@@ -441,7 +442,7 @@ O **DataChat BI** foi projetado para transformar a maneira como equipes de logí
 
 A aplicabilidade se divide em duas interfaces principais:
 
-## 1. Análise Conversacional em Tempo Real via Chatbot
+## Análise Conversacional em Tempo Real via Chatbot
 
 O coração do projeto é um chatbot inteligente que permite a qualquer membro da equipe "conversar" com o banco de dados em português, sem precisar saber SQL. Isso democratiza o acesso à informação e acelera a tomada de decisão.
 
@@ -463,7 +464,7 @@ O coração do projeto é um chatbot inteligente que permite a qualquer membro d
 
 ---
 
-## 2. Monitoramento Estratégico com o Dashboard
+## Monitoramento Estratégico com o Dashboard
 
 Para uma visão macro e de alto nível, o Dashboard oferece um painel consolidado com os indicadores de performance (KPIs) mais importantes da operação. Graças a um sistema de polling, os dados são atualizados automaticamente, funcionando como uma central de monitoramento "ao vivo".
 
