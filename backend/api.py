@@ -144,3 +144,91 @@ def read_root():
     Útil para monitoramento e testes de deploy.
     """
     return {"status": "DataChat API is running"}
+
+
+"""
+--- Exemplos de Saída do Endpoint /chat ---
+
+A seguir estão exemplos dos diferentes tipos de JSON que este endpoint pode retornar,
+dependendo da pergunta do usuário e do resultado do processamento da cadeia de IA.
+
+# ---------------------------------------------------------------------------------
+# 1. Resposta de Texto Simples
+# ---------------------------------------------------------------------------------
+# Ocorre em saudações, ou quando o usuário pede um dado específico que não é
+# ideal para um gráfico (ex: um único status, um e-mail, etc.).
+
+# Pergunta do Usuário: "Qual o status da operação com código de rastreio 'VV820450103ER'?"
+
+{
+    "type": "text",
+    "content": "A operação com o código de rastreio 'VV820450103ER' está com o status 'EM_TRANSITO'.",
+    "generated_sql": "SELECT status FROM operacoes_logisticas WHERE codigo_rastreio = 'VV820450103ER'",
+    "response_time": "3.14",
+    "session_id": "f9087639-1f3a-48fd-9eb7-53318fc04643"
+}
+
+# ---------------------------------------------------------------------------------
+# 2. Resposta com Gráfico
+# ---------------------------------------------------------------------------------
+# Ocorre quando o LLM Analista de Dados determina que a melhor forma de apresentar
+# a informação é através de uma visualização.
+
+# Pergunta do Usuário: "Qual o valor total de frete agrupado por estado de destino?"
+
+{
+    "type": "chart",
+    "chart_type": "bar",
+    "title": "Valor Total de Frete por Estado de Destino",
+    "data": [
+        {
+            "uf_destino": "SP",
+            "valor_total_frete": 106087014.78
+        },
+        {
+            "uf_destino": "MG",
+            "valor_total_frete": 70133470.89
+        },
+        {
+            "uf_destino": "RS",
+            "valor_total_frete": 69999574.58
+        }
+    ],
+    "x_axis": "uf_destino",
+    "y_axis": [
+        "valor_total_frete"
+    ],
+    "y_axis_label": "Valor Total Frete (R$)",
+    "generated_sql": "SELECT uf_destino, SUM(valor_frete) AS valor_total_frete FROM operacoes_logisticas GROUP BY uf_destino",
+    "response_time": "4.51",
+    "session_id": "f9087639-1f3a-48fd-9eb7-53318fc04643"
+}
+
+# ---------------------------------------------------------------------------------
+# 3. Resposta de Texto para Consulta sem Resultados
+# ---------------------------------------------------------------------------------
+# Ocorre quando a query SQL é válida, mas não encontra nenhum registro no banco de dados.
+# O bot gera uma resposta amigável em vez de um erro.
+
+# Pergunta do Usuário: "Qual o status da operação com código de rastreio 'NAOEXISTE123'?"
+
+{
+    "type": "text",
+    "content": "Não encontrei nenhuma informação para a sua solicitação sobre a operação com código de rastreio 'NAOEXISTE123'.",
+    "generated_sql": "SELECT status FROM operacoes_logisticas WHERE codigo_rastreio = 'NAOEXISTE123'",
+    "response_time": "2.89",
+    "session_id": "f9087639-1f3a-48fd-9eb7-53318fc04643"
+}
+
+# ---------------------------------------------------------------------------------
+# 4. Resposta de Erro Grave
+# ---------------------------------------------------------------------------------
+# Ocorre quando uma exceção não tratada acontece durante a execução da cadeia de IA.
+# O endpoint captura o erro e retorna uma mensagem genérica e segura.
+
+{
+    "type": "text",
+    "content": "Desculpe, ocorreu um erro grave ao processar sua solicitação."
+}
+
+"""
