@@ -471,9 +471,6 @@ def create_master_chain() -> Runnable:
 # =================================================================================================
 # Análise Detalhada das Variáveis Runnable
 #
-# Este documento explica o propósito, fluxo e dados de cada uma das principais variáveis Runnable
-# (como os ChatPromptTemplate e o RunnableBranch) que são usadas como blocos de construção
-# para as cadeias maiores no arquivo sql_rag_chain.py.
 # =================================================================================================
 #
 # 1. router_prompt_with_history
