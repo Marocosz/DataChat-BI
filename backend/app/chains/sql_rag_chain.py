@@ -294,9 +294,6 @@ def create_master_chain() -> Runnable:
 # =================================================================================================
 # Análise de Fluxo e Dados das Cadeias (Chains)
 #
-# Este documento detalha o fluxo de dados (entrada e saída) para cada cadeia Runnable definida
-# no arquivo sql_rag_chain.py. O objetivo é clarificar a responsabilidade e o comportamento
-# de cada "especialista" na linha de montagem da IA.
 # =================================================================================================
 #
 # 1. router_chain
