@@ -141,7 +141,8 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 | 1.0    | 25/09/2025 | MVP funcional do DataChat BI       |
 
 ## Próximas Implementações
-- [ ] Rate Limiting (limitar requisições do bot por minuto por sessão ou ip)
+- [ ] **Controle de Requisições (Rate Limiting):** Atualmente, a API не impõe um limite no número de requisições que um usuário pode fazer em um curto período. Para proteger a aplicação contra abusos, controlar os custos com a API do LLM e prevenir ataques de negação de serviço (DoS), o próximo passo é implementar um controle de taxa. Isso pode ser feito com uma biblioteca como a `fastapi-limiter`, definindo um limite de, por exemplo, 20 perguntas por minuto por usuário ou IP.
+- [ ] **Histórico de Conversa Persistente:** Atualmente, o histórico do chat é perdido ao fechar a aba. Uma próxima implementação seria tornar as conversas persistentes, permitindo que o usuário retome sua sessão de onde parou. Isso seria feito trocando o `store = {}` em memória por um banco de dados (Redis ou PostgreSQL), aproveitando a arquitetura atual do backend.
 
 ---
 
@@ -150,6 +151,10 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 Nesta seção, apresentamos uma visão detalhada de como cada parte do DataChat BI opera, do frontend ao backend. Aqui você encontrará uma explicação clara de como os componentes, scripts e módulos interagem entre si, como os dados fluem do usuário até o banco de dados e de volta, e como a inteligência artificial é utilizada para processar perguntas, gerar consultas SQL e exibir respostas e gráficos.  
 
 O objetivo é fornecer ao leitor uma compreensão completa do funcionamento interno do sistema, permitindo não apenas usar o DataChat BI, mas também entender, manter e expandir seu código com facilidade.
+
+> [!NOTE]
+> Para uma análise detalhada e passo a passo do fluxo completo da aplicação — desde a pergunta do usuário no frontend até a resposta final da IA — consulte o documento:
+> **[Análise do Fluxo Geral](FLUXO_GERAL.md)**
 
 ---
 
