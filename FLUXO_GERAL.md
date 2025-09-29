@@ -7,9 +7,9 @@ aplicação. Ele descreve a sequência cronológica completa de uma requisição
 desde o clique do usuário no frontend até a resposta da IA, detalhando cada
 função, cadeia e componente no momento exato em que ele é acionado no fluxo.
 
----
+
 ## Passo 0: A Preparação (O que acontece UMA VEZ na inicialização do backend)
----
+
 1.  **Comando de Início:** Você executa `uvicorn api:app --reload` no terminal.
 2.  **Carregamento da API:** O servidor Uvicorn carrega o arquivo `backend/api.py`.
 3.  **CONSTRUÇÃO DA CHAIN:** A linha `rag_chain = create_master_chain()` é executada.
@@ -43,9 +43,9 @@ função, cadeia e componente no momento exato em que ele é acionado no fluxo.
       ```
     
 
----
+
 ## Passo 1: A Pergunta do Usuário (Frontend)
----
+
 1.  **Ação do Usuário:** O usuário digita uma pergunta (ex: "e o total de operações dele?") e clica em "Enviar" na interface.
 2.  **Origem:** `frontend/src/pages/Chat.js`.
 3.  **Ação do Código:**
@@ -53,18 +53,18 @@ função, cadeia e componente no momento exato em que ele é acionado no fluxo.
     - Ela pega o texto do `input` e o `sessionId` que está guardado no estado do React.
     - A biblioteca `axios` faz uma requisição `HTTP POST` para o endpoint `http://localhost:8000/chat`, enviando um JSON com a `question` e o `session_id`.
 
----
+
 ## Passo 2: A Chegada no Backend (API)
----
+
 1.  **Ação do Servidor:** O FastAPI recebe a requisição POST.
 2.  **Origem:** `backend/api.py`.
 3.  **Ação do Código:**
     - O FastAPI direciona a requisição para a função `@app.post("/chat") async def chat_endpoint(...)`.
     - O Pydantic valida o JSON recebido e o converte no objeto `request: ChatRequest`.
 
----
+
 ## Passo 3: A Magia da Memória (Invocando a Cadeia)
----
+
 1.  **Ação do Código:** A linha `rag_chain.invoke(...)` é chamada dentro do `chat_endpoint`.
 2.  **Lógica Principal:** A execução é entregue ao objeto `chain_with_memory` (`RunnableWithMessageHistory`).
 3.  **BUSCA DO HISTÓRICO:**
@@ -85,9 +85,9 @@ função, cadeia e componente no momento exato em que ele é acionado no fluxo.
 
 4.  **Injeção do Histórico:** O `RunnableWithMessageHistory` pega o histórico retornado e o injeta no "pacote de dados", criando um dicionário como `{"question": "...", "chat_history": [...]}`.
 
----
+
 ## Passo 4: A Linha de Montagem da IA (Execução da `main_chain`)
----
+
 1.  **Ação do Código:** O "pacote completo" (pergunta + histórico) é finalmente passado para a `main_chain`.
 2.  **Ordem dos Acontecimentos Interna:**
 
@@ -220,17 +220,17 @@ função, cadeia e componente no momento exato em que ele é acionado no fluxo.
 
     **g) Formatação:** Funções auxiliares combinam e formatam a saída final.
 
----
+
 ## Passo 5: O Retorno e a Persistência
----
+
 1.  **Ação do Código:** A `main_chain` termina e retorna seu dicionário de saída.
 2.  **Lógica Principal:** A execução volta para o `chain_with_memory`.
 3.  **Salvar Memória:** O `chain_with_memory` pega a pergunta original e a `history_message` e as salva de volta no `store` usando o `session_id`.
 4.  **Retorno para a API:** O dicionário de saída é retornado para a função `chat_endpoint`.
 
----
+
 ## Passo 6: A Resposta Final (Backend para Frontend)
----
+
 1.  **Origem:** A execução volta para `api.py`.
 2.  **Ação do Código:** A função `chat_endpoint` recebe o resultado, adiciona `response_time` e `session_id` e retorna o JSON final.
 
@@ -267,8 +267,8 @@ função, cadeia e componente no momento exato em que ele é acionado no fluxo.
     ```
     
 
----
+
 ## Passo 7: Exibição na Tela (Frontend)
----
+
 1.  **Origem:** `frontend/src/pages/Chat.js`.
 2.  **Ação do Código:** A chamada `axios` recebe a resposta. A função `handleSubmit` atualiza o estado `messages` com a resposta do bot, fazendo com que o novo `ChatMessage` seja renderizado na tela para o usuário ver.
