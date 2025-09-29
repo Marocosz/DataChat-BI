@@ -1,5 +1,5 @@
 
-# DOCUMENTO MESTRE DE ARQUITETURA E FLUXO DE DADOS - SUPPBOT BI
+# DOCUMENTO MESTRE DE ARQUITETURA E FLUXO DE DADOS - DATACHAT BI
 
 Propósito do Arquivo:
 Este documento é a fonte definitiva da verdade sobre o funcionamento interno da
