@@ -141,7 +141,7 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 | 1.0    | 25/09/2025 | MVP funcional do DataChat BI       |
 
 ## Próximas Implementações
-- [] Rate Limiting (limitar requisições do bot por minuto por sessão ou ip)
+- [ ] Rate Limiting (limitar requisições do bot por minuto por sessão ou ip)
 
 ---
 
