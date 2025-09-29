@@ -466,3 +466,114 @@ def create_master_chain() -> Runnable:
 #   }
 #
 # =================================================================================================
+
+
+# =================================================================================================
+# Análise Detalhada das Variáveis Runnable
+#
+# Este documento explica o propósito, fluxo e dados de cada uma das principais variáveis Runnable
+# (como os ChatPromptTemplate e o RunnableBranch) que são usadas como blocos de construção
+# para as cadeias maiores no arquivo sql_rag_chain.py.
+# =================================================================================================
+#
+# 1. router_prompt_with_history
+# Tipo: ChatPromptTemplate
+# Propósito: Preparar a instrução (prompt) completa para o LLM Roteador. Ele combina a instrução
+# de roteamento fixa com o histórico dinâmico da conversa.
+# Como Funciona:
+#   1. Recebe um dicionário com question e chat_history.
+#   2. O MessagesPlaceholder(variable_name="chat_history") atua como espaço reservado
+#      onde a lista de mensagens do histórico é injetada.
+#   3. A instrução do ROUTER_PROMPT (que contém {question}) é adicionada como a mensagem final.
+# Exemplo de Entrada:
+#   {
+#     "question": "e o total de frete deles?",
+#     "chat_history": [
+#       "HumanMessage(content='Liste os 5 maiores clientes.')",
+#       "AIMessage(content='Os 5 maiores clientes são...')"
+#     ]
+#   }
+# Exemplo de Saída (o que é enviado para o LLM):
+#   [
+#     HumanMessage(content='Liste os 5 maiores clientes.'),
+#     AIMessage(content='Os 5 maiores clientes são...'),
+#     HumanMessage(content='Sua tarefa é classificar o texto do usuário... Categoria:')
+#   ]
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 2. simple_chat_prompt_with_history
+# Tipo: ChatPromptTemplate
+# Propósito: Preparar o prompt para o LLM de conversa simples, dando a ele o histórico da
+# conversa e definindo sua persona como "assistente amigável".
+# Como Funciona:
+#   1. Recebe um dicionário com question e chat_history.
+#   2. Injeta o histórico da conversa através do MessagesPlaceholder.
+#   3. Adiciona a instrução de persona ("Você é um assistente amigável...") como mensagem final.
+# Exemplo de Entrada:
+#   {
+#     "question": "Olá, tudo bem?",
+#     "chat_history": []
+#   }
+# Exemplo de Saída (o que é enviado para o LLM):
+#   [
+#     HumanMessage(content='Você é um assistente amigável chamado DataChat. Responda de forma concisa e útil.')
+#   ]
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 3. O Dicionário de Preparação da final_response_chain
+# Variável: (anônima, o primeiro elemento da final_response_chain)
+#   {
+#     "result": lambda x: x["query_result"],
+#     "question": lambda x: x["question"],
+#     "format_instructions": lambda x: parser.get_format_instructions(),
+#   }
+# Tipo: RunnableParallel
+# Propósito: Preparar de forma eficiente (em paralelo) todas as peças de informação que o
+# prompt FINAL_ANSWER_PROMPT precisa para funcionar.
+# Como Funciona:
+#   1. Recebe o dicionário de dados que está fluindo pela sql_chain.
+#   2. A lambda x: x["query_result"] extrai o resultado do banco e coloca em result.
+#   3. A lambda x: x["question"] extrai a pergunta (já reescrita) e coloca em question.
+#   4. A lambda x: parser.get_format_instructions() gera instruções técnicas JSON e coloca
+#      em format_instructions.
+# Exemplo de Entrada:
+#   {
+#     "question": "Qual o status da operação VV820450103ER?",
+#     "standalone_question": "Qual o status da operação VV820450103ER?",
+#     "generated_sql": "SELECT status FROM operacoes_logisticas WHERE codigo_rastreio = 'VV820450103ER'",
+#     "query_result": "[{'status': 'EM_TRANSITO'}]"
+#   }
+# Exemplo de Saída (o que é passado para o FINAL_ANSWER_PROMPT):
+#   {
+#     "result": "[{'status': 'EM_TRANSITO'}]",
+#     "question": "Qual o status da operação VV820450103ER?",
+#     "format_instructions": "A resposta DEVE ser um JSON formatado da seguinte maneira..."
+#   }
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 4. branch
+# Tipo: RunnableBranch
+# Propósito: Funcionar como um if/elif/else dentro da cadeia. Examina o estado atual da
+# conversa (topic) e decide qual sub-cadeia deve ser executada a seguir.
+# Como Funciona:
+#   1. Recebe o dicionário de dados que já passou pelo router_chain e contém a chave topic.
+#   2. Primeira condição: verifica se "consulta_ao_banco_de_dados" está em topic. Se sim, invoca sql_chain.
+#   3. Se não, verifica se "saudacao_ou_conversa_simples" está em topic. Se sim, invoca simple_chat_chain.
+#   4. Se nenhuma condição for atendida, invoca a fallback_chain como último recurso.
+# Exemplo de Entrada:
+#   {
+#     "question": "Olá!",
+#     "chat_history": [],
+#     "topic": "saudacao_ou_conversa_simples"
+#   }
+# Exemplo de Saída:
+#   {
+#     "type": "text",
+#     "content": "Olá! Como vai?",
+#     "generated_sql": "Nenhuma query foi necessária para esta resposta."
+#   }
+#
+# =================================================================================================
