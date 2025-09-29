@@ -142,7 +142,7 @@ O backend foi construído com **FastAPI** + **LangChain**, incluindo:
 | 1.0    | 25/09/2025 | MVP funcional do DataChat BI       |
 
 ## Próximas Implementações
-- [ ] **Controle de Requisições (Rate Limiting):** Atualmente, a API не impõe um limite no número de requisições que um usuário pode fazer em um curto período. Para proteger a aplicação contra abusos, controlar os custos com a API do LLM e prevenir ataques de negação de serviço (DoS), o próximo passo é implementar um controle de taxa. Isso pode ser feito com uma biblioteca como a `fastapi-limiter`, definindo um limite de, por exemplo, 20 perguntas por minuto por usuário ou IP.
+- [ ] **Controle de Requisições (Rate Limiting):** Atualmente, a API não impõe um limite no número de requisições que um usuário pode fazer em um curto período. Para proteger a aplicação contra abusos, controlar os custos com a API do LLM e prevenir ataques de negação de serviço (DoS), o próximo passo é implementar um controle de taxa. Isso pode ser feito com uma biblioteca como a `fastapi-limiter`, definindo um limite de, por exemplo, 20 perguntas por minuto por usuário ou IP.
 - [ ] **Histórico de Conversa Persistente:** Atualmente, o histórico do chat é perdido ao fechar a aba. Uma próxima implementação seria tornar as conversas persistentes, permitindo que o usuário retome sua sessão de onde parou. Isso seria feito trocando o `store = {}` em memória por um banco de dados (Redis ou PostgreSQL), aproveitando a arquitetura atual do backend.
 
 ---
