@@ -290,3 +290,182 @@ def create_master_chain() -> Runnable:
     )
     
     return chain_with_memory
+
+# =================================================================================================
+# Análise de Fluxo e Dados das Cadeias (Chains)
+#
+# Este documento detalha o fluxo de dados (entrada e saída) para cada cadeia Runnable definida
+# no arquivo sql_rag_chain.py. O objetivo é clarificar a responsabilidade e o comportamento
+# de cada "especialista" na linha de montagem da IA.
+# =================================================================================================
+#
+# 1. router_chain
+# Propósito: Classificar a intenção do usuário para decidir se a pergunta requer uma consulta
+# ao banco de dados ou se é uma conversa casual.
+# Fluxo Detalhado:
+#   1. Recebe a pergunta do usuário e o histórico da conversa.
+#   2. Monta o ROUTER_PROMPT com essas informações.
+#   3. Envia o prompt para um LLM.
+#   4. O StrOutputParser garante que a saída seja uma string de texto limpa.
+# Exemplo de Entrada:
+#   {
+#     "question": "e qual o total de mercadorias dele?",
+#     "chat_history": ["Human: Qual o cliente com mais operações? AI: O cliente é 'Porto'."]
+#   }
+# Exemplo de Saída:
+#   "consulta_ao_banco_de_dados"
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 2. simple_chat_chain
+# Propósito: Gerar uma resposta amigável e conversacional para perguntas que não precisam
+# de acesso ao banco de dados.
+# Fluxo Detalhado:
+#   1. Recebe a pergunta e o histórico.
+#   2. Monta o simple_chat_prompt_with_history.
+#   3. Envia para um LLM que gera a resposta textual.
+#   4. O StrOutputParser limpa a resposta.
+#   5. A função format_simple_chat_output envolve a resposta em um dicionário JSON padronizado.
+# Exemplo de Entrada:
+#   {
+#     "question": "Olá, tudo bem?",
+#     "chat_history": []
+#   }
+# Exemplo de Saída:
+#   {
+#     "type": "text",
+#     "content": "Olá! Tudo bem. Como posso te ajudar hoje?",
+#     "generated_sql": "Nenhuma query foi necessária para esta resposta."
+#   }
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 3. rephrasing_chain
+# Propósito: Atuar como o "Especialista em Contexto". Transforma uma pergunta ambígua ou de
+# acompanhamento em uma pergunta completa e autônoma.
+# Fluxo Detalhado:
+#   1. Recebe a pergunta do usuário e o histórico da conversa.
+#   2. Usa o REPHRASER_PROMPT (um FewShotPromptTemplate) para instruir o LLM a reescrever a pergunta.
+#   3. O LLM analisa o histórico e a nova pergunta para resolver o contexto.
+#   4. O StrOutputParser extrai a pergunta reescrita como uma string.
+# Exemplo de Entrada:
+#   {
+#     "question": "e qual o total de mercadorias dele?",
+#     "chat_history": ["Human: Qual o cliente com mais operações? AI: O cliente é 'Porto'."]
+#   }
+# Exemplo de Saída:
+#   "Qual o valor total de mercadorias do cliente 'Porto'?"
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 4. sql_generation_chain
+# Propósito: Atuar como o "Engenheiro SQL". Traduz uma pergunta clara e completa em uma
+# query SQL válida.
+# Fluxo Detalhado:
+#   1. Recebe a pergunta já reescrita (autônoma).
+#   2. O RunnablePassthrough.assign adiciona o schema do banco de dados ao contexto.
+#   3. Monta o SQL_PROMPT com a pergunta e o schema.
+#   4. Envia para um LLM (geralmente um modelo mais poderoso) para gerar o código SQL.
+#   5. O StrOutputParser extrai a query SQL como uma string.
+# Exemplo de Entrada:
+#   {
+#     "question": "Qual o valor total de mercadorias do cliente 'Porto'?"
+#   }
+# Exemplo de Saída:
+#   SELECT SUM(o.valor_mercadoria) FROM operacoes_logisticas o
+#   JOIN clientes c ON o.cliente_id = c.id
+#   WHERE c.nome_razao_social = 'Porto'
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 5. final_response_chain
+# Propósito: Atuar como o "Analista de Dados". Converte o resultado bruto do banco de dados
+# em uma resposta JSON amigável e estruturada (texto ou gráfico).
+# Fluxo Detalhado:
+#   1. Recebe a pergunta reescrita e o resultado da query.
+#   2. O dicionário de entrada prepara as chaves result, question e format_instructions.
+#   3. Monta o FINAL_ANSWER_PROMPT com essas informações.
+#   4. Envia para um LLM que decide entre texto ou gráfico e gera uma string JSON.
+#   5. O JsonOutputParser valida e converte a string em um objeto dicionário Python.
+# Exemplo de Entrada:
+#   {
+#     "question": "Qual o valor total de mercadorias do cliente 'Porto'?",
+#     "query_result": "[{'sum': 108396678.02}]"
+#   }
+# Exemplo de Saída:
+#   {
+#     "type": "text",
+#     "content": "O valor total de mercadorias para o cliente 'Porto' é de R$ 108.396.678,02."
+#   }
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 6. sql_chain (A Linha de Montagem Completa)
+# Propósito: Orquestrar a sequência completa de passos para uma consulta ao banco.
+# Fluxo Detalhado:
+#   1. Entrada: Recebe a pergunta original do usuário e o histórico.
+#   2. Passo 1: Invoca a rephrasing_chain para obter a pergunta autônoma.
+#   3. Passo 2: Passa a standalone_question para a sql_generation_chain para obter o SQL.
+#   4. Passo 3: Passa a generated_sql para a função execute_and_log_query para obter o resultado.
+#   5. Passo 4: Passa a standalone_question e o query_result para a final_response_chain.
+#   6. Passo 5: Combina o final_response_json com a generated_sql no dicionário final.
+#   7. Saída: O JSON completo, pronto para ser enviado ao frontend.
+# Exemplo de Entrada:
+#   {
+#     "question": "e qual o total de mercadorias dele?",
+#     "chat_history": ["Human: Qual o cliente com mais operações? AI: O cliente é 'Porto'."],
+#     "topic": "consulta_ao_banco_de_dados"
+#   }
+# Exemplo de Saída:
+#   {
+#     "type": "text",
+#     "content": "O valor total de mercadorias para o cliente 'Porto' é de R$ 108.396.678,02.",
+#     "generated_sql": "SELECT SUM(o.valor_mercadoria) FROM ..."
+#   }
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 7. main_chain
+# Propósito: A cadeia principal que orquestra o fluxo de alto nível, desde o roteamento
+# até a formatação final da saída.
+# Fluxo Detalhado:
+#   1. Entrada: Recebe a pergunta original e o histórico.
+#   2. Invoca trim_history para encurtar o histórico.
+#   3. Invoca router_chain para obter o topic.
+#   4. Invoca o branch que, com base no topic, escolhe entre sql_chain ou simple_chat_chain.
+#   5. Passa a saída da cadeia escolhida para a função format_final_output.
+# Exemplo de Entrada:
+#   {
+#     "question": "e qual o total de mercadorias dele?",
+#     "chat_history": ["..."]
+#   }
+# Exemplo de Saída:
+#   {
+#     "api_response": {
+#       "type": "text",
+#       "content": "O valor total de mercadorias...",
+#       "generated_sql": "SELECT SUM(...)"
+#     },
+#     "history_message": "O valor total de mercadorias para o cliente 'Porto' é de R$ 108.396.678,02."
+#   }
+#
+# -------------------------------------------------------------------------------------------------
+#
+# 8. chain_with_memory
+# Propósito: A cadeia final exportada pelo módulo. Ela envolve a main_chain com a lógica
+# de gerenciamento automático de memória.
+# Fluxo Detalhado:
+#   1. Entrada: Recebe a pergunta do usuário e o session_id no objeto config.
+#   2. Carregar Memória: Usa a função get_session_history para carregar o histórico da conversa.
+#   3. Invocar a main_chain: Executa a cadeia principal com a pergunta e o histórico carregado.
+#   4. Salvar Memória: Pega a question de entrada e a history_message de saída e salva de volta.
+# Exemplo de Entrada (como a API a chama):
+#   Input: {"question": "e qual o total de mercadorias dele?"}
+#   Config: {"configurable": {"session_id": "sessao-456"}}
+# Exemplo de Saída (o que a API recebe):
+#   {
+#     "api_response": { "..."},
+#     "history_message": "..."
+#   }
+#
+# =================================================================================================
