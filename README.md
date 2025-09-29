@@ -156,6 +156,9 @@ O objetivo é fornecer ao leitor uma compreensão completa do funcionamento inte
 > Para uma análise detalhada e passo a passo do fluxo completo da aplicação — desde a pergunta do usuário no frontend até a resposta final da IA — consulte o documento:
 > **[Análise do Fluxo Geral](FLUXO_GERAL.md)**
 
+> [!TIP]
+> **Explore o código-fonte!** Cada arquivo de código mencionado abaixo foi documentado com um cabeçalho descritivo que detalha sua arquitetura, o fluxo de dados (entradas e saídas) e a responsabilidade de cada função. É um excelente complemento a esta documentação de alto nível.
+
 ---
 
 ## [`backend/app/api/dashboard.py`](./backend/app/api/dashboard.py)
