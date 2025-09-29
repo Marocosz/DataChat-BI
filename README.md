@@ -2,9 +2,9 @@
 
 > DataChat BI é uma solução de Business Intelligence conversacional para logística, baseada em IA generativa e RAG (Retrieval-Augmented Generation). O sistema utiliza LLMs para interpretar perguntas em linguagem natural, gerar consultas SQL dinâmicas e entregar respostas precisas e contextualizadas, incluindo gráficos e KPIs. Com arquitetura modular de prompts e memória de conversa, DataChat BI oferece uma interface inteligente para análise avançada de dados logísticos via dashboard e principalmente chatbot.
 
-# 🗂️ Índices
+# 🗂️ Índice
 - [🤖 DataChat - BI](#-datachat---bi)
-- [🗂️ Índices](#️-índices)
+- [🗂️ Índice](#️-índice)
 - [🛠️ Tecnologias Usadas](#️-tecnologias-usadas)
   - [**Geral**](#geral)
   - [**Frontend**](#frontend)
