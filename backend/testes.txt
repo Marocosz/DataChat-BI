@@ -130,7 +130,7 @@ E qual o valor total de mercadorias desse mesmo cliente?
 Qual o estado (UF) de destino com o maior valor de frete?
 e quantas operações foram para lá?
 
-# --- Cenário 4: Teste de Resistência (Lógica mais Complexa com AVG) ---
+# --- Cenário 4: Teste de Resistência (Lógica mais Complexa com AVG) --- 
 # Objetivo: Levar a capacidade de raciocínio contextual da IA ao limite com uma
 # métrica inicial mais complexa (`AVG`).
 Qual a natureza de carga com o maior peso médio por operação?

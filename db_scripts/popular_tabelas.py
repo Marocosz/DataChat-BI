@@ -8,6 +8,7 @@
 # massa para melhor performance. 
 # =============================================================================
 import os
+from pathlib import Path
 import random
 import psycopg2
 import io
@@ -16,9 +17,10 @@ from dotenv import load_dotenv
 from decimal import Decimal
 from datetime import datetime, timedelta
 
-# Carrega as variáveis de ambiente do arquivo .env
-load_dotenv()
-
+# Define o caminho para a raiz do projeto (um nível acima do db_scripts)
+BASE_DIR = Path(__file__).resolve().parent.parent
+# Carrega as variáveis do arquivo .env para o ambiente do script
+load_dotenv(BASE_DIR / "backend" / ".env")
 # --- CONFIGURAÇÕES ---
 NUMERO_DE_CLIENTES = 120
 NUMERO_DE_OPERACOES = 250000 
@@ -54,9 +56,13 @@ def popular_banco():
     """
     try:
         db_params = {
-            "host": os.getenv("DB_HOST"), "port": os.getenv("DB_PORT"),
-            "database": os.getenv("DB_DATABASE"), "user": os.getenv("DB_USERNAME"),
-            "password": os.getenv("DB_PASSWORD")
+            "host": os.getenv("DB_HOST"),
+            "port": os.getenv("DB_PORT"),
+            "database": os.getenv("DB_NAME"),       
+            "user": os.getenv("DB_USER"),      
+            "password": os.getenv("DB_PASS"),       
+            "client_encoding": "utf8",
+            "sslmode": "require"
         }
         
         with psycopg2.connect(**db_params) as conn:

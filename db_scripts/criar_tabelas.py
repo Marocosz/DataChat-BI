@@ -12,12 +12,16 @@
 # =============================================================================
 
 import os
+from pathlib import Path
 import psycopg2
 import psycopg2.errors
 from dotenv import load_dotenv
 
+
+# Define o caminho para a raiz do projeto (um nível acima do db_scripts)
+BASE_DIR = Path(__file__).resolve().parent.parent
 # Carrega as variáveis do arquivo .env para o ambiente do script
-load_dotenv()
+load_dotenv(BASE_DIR / "backend" / ".env")
 
 # --- SCRIPT SQL COMPLETO PARA CRIAÇÃO DO BANCO DE DADOS ---
 SQL_SETUP_SCRIPT = """
@@ -100,10 +104,11 @@ def setup_database():
         db_params = {
             "host": os.getenv("DB_HOST"),
             "port": os.getenv("DB_PORT"),
-            "database": os.getenv("DB_DATABASE"),
-            "user": os.getenv("DB_USERNAME"),
-            "password": os.getenv("DB_PASSWORD"),
-            "client_encoding": "utf8"
+            "database": os.getenv("DB_NAME"),       
+            "user": os.getenv("DB_USER"),      
+            "password": os.getenv("DB_PASS"),       
+            "client_encoding": "utf8",
+            "sslmode": "require"
         }
         
         # Validação para garantir que todas as variáveis foram carregadas

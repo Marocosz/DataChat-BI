@@ -11,6 +11,8 @@
 import logging
 import psycopg2
 from langchain_community.utilities import SQLDatabase
+# Necessário para criar a engine e usar variáveis separadas.
+from sqlalchemy import create_engine 
 from .config import settings
 
 # Obtém um logger específico para este módulo.
@@ -23,6 +25,9 @@ def get_db_connection() -> SQLDatabase:
     """
     Cria a conexão principal do LangChain, que será usada para EXECUTAR as queries SQL
     geradas pela IA.
+    
+    Esta função foi modificada para montar a URI a partir das variáveis separadas do .env
+    e adicionar o parâmetro SSL obrigatório via connect_args.
 
     Returns:
         Uma instância de SQLDatabase configurada para o banco de dados do projeto.
@@ -30,13 +35,25 @@ def get_db_connection() -> SQLDatabase:
     Raises:
         Exception: Se a conexão com o banco de dados falhar.
     """
+    
+    # 1. Monta a URI completa a partir das variáveis do .env
+    DATABASE_URI_FULL = (
+        f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+    )
+    # 2. Argumento necessário para conexão SSL/TLS com serviços em nuvem como Render
+    SSL_ARGS = {"sslmode": "require"}
+    
     try:
-        # Usa um método do LangChain para criar a conexão a partir da URI.
-        db = SQLDatabase.from_uri(
-            settings.DATABASE_URI,
-            # Limita as tabelas que o LangChain "enxerga", por segurança e para manter o foco.
+        # 3. Criamos a Engine explicitamente, passando os argumentos de conexão (SSL)
+        engine = create_engine(
+            DATABASE_URI_FULL,
+            connect_args=SSL_ARGS
+        )
+        
+        # 4. Criamos a instância SQLDatabase do LangChain usando a Engine customizada.
+        db = SQLDatabase(
+            engine=engine,
             include_tables=['operacoes_logisticas', 'clientes'],
-            # Definimos como 0 para não incluir nenhuma linha de exemplo, reduzindo o tamanho do schema.
             sample_rows_in_table_info=0
         )
         
@@ -45,7 +62,6 @@ def get_db_connection() -> SQLDatabase:
     
     except Exception as e:
         logger.error(f"Falha ao conectar com o banco de dados (LangChain): {e}")
-        # Re-lança a exceção para que o erro seja tratado em um nível superior.
         raise
 
 def _generate_compact_db_schema() -> str:
@@ -60,13 +76,15 @@ def _generate_compact_db_schema() -> str:
     conn = None
     try:
         logger.info("Gerando schema compacto do banco de dados a partir do DB...")
-        # Cria uma conexão direta usando psycopg2 para extrair informações do schema.
+        
+        # ADIÇÃO DO PARÂMETRO SSL AQUI: Resolve erro SSL/TLS no psycopg2 direto.
         conn = psycopg2.connect(
             host=settings.DB_HOST,
             dbname=settings.DB_NAME,
             user=settings.DB_USER,
             password=settings.DB_PASS,
-            port=settings.DB_PORT
+            port=settings.DB_PORT,
+            sslmode='require' # <--- A correção de segurança
         )
         cur = conn.cursor()
         
@@ -122,4 +140,5 @@ def get_compact_db_schema() -> str:
     return _cached_schema
 
 # Cria uma instância única da conexão do LangChain quando a aplicação é iniciada.
+# Esta linha tentará se conectar ao banco imediatamente, levantando um erro se falhar.
 db_instance = get_db_connection()
